@@ -27,6 +27,13 @@
     "step": {
       "init": {
         "title": "HEMM Options",
+        "description": "Choose an action.",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "settings": {
+        "title": "HEMM Settings",
         "description": "Adjust HEMM optimization parameters.",
         "data": {
           "horizon_hours": "Planning horizon (hours)",
@@ -34,13 +41,36 @@
           "price_adapter": "Price source adapter",
           "solver_backend": "Solver backend"
         }
+      },
+      "select_device": {
+        "title": "Add Device",
+        "description": "Choose device type and configuration tier.",
+        "data": {
+          "device_type": "Device type",
+          "tier": "Configuration tier"
+        }
+      },
+      "configure_device": {
+        "title": "Configure Device",
+        "description": "Set device parameters. A safe default script is mandatory.",
+        "data": {
+          "device_name": "Device name",
+          "safe_default_script": "Safe default script"
+        }
       }
+    },
+    "errors": {
+      "safe_default_required": "A safe default script is required for every device."
     }
   },
   "issues": {
     "solver_degraded": {
       "title": "Solver performance degraded",
       "description": "The HEMM solver did not converge within the expected time. This may indicate a configuration issue or excessive device count."
+    },
+    "online_id_update": {
+      "title": "Model update available for {device_name}",
+      "description": "Online identification suggests updated parameters for {device_name}. Review and confirm to apply."
     }
   }
 }

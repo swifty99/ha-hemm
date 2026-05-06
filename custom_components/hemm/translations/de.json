@@ -27,6 +27,13 @@
     "step": {
       "init": {
         "title": "HEMM Optionen",
+        "description": "Aktion wählen.",
+        "data": {
+          "action": "Aktion"
+        }
+      },
+      "settings": {
+        "title": "HEMM Einstellungen",
         "description": "HEMM Optimierungsparameter anpassen.",
         "data": {
           "horizon_hours": "Planungshorizont (Stunden)",
@@ -34,13 +41,36 @@
           "price_adapter": "Preisquelle",
           "solver_backend": "Solver-Backend"
         }
+      },
+      "select_device": {
+        "title": "Gerät hinzufügen",
+        "description": "Gerätetyp und Konfigurationsstufe wählen.",
+        "data": {
+          "device_type": "Gerätetyp",
+          "tier": "Konfigurationsstufe"
+        }
+      },
+      "configure_device": {
+        "title": "Gerät konfigurieren",
+        "description": "Geräteparameter festlegen. Ein sicheres Fallback-Script ist erforderlich.",
+        "data": {
+          "device_name": "Gerätename",
+          "safe_default_script": "Sicheres Fallback-Script"
+        }
       }
+    },
+    "errors": {
+      "safe_default_required": "Ein sicheres Fallback-Script ist für jedes Gerät erforderlich."
     }
   },
   "issues": {
     "solver_degraded": {
       "title": "Solver-Leistung eingeschränkt",
       "description": "Der HEMM-Solver konnte nicht innerhalb der erwarteten Zeit konvergieren. Dies kann auf ein Konfigurationsproblem oder eine zu hohe Geräteanzahl hinweisen."
+    },
+    "online_id_update": {
+      "title": "Modell-Update verfügbar für {device_name}",
+      "description": "Die Online-Identifikation schlägt aktualisierte Parameter für {device_name} vor. Überprüfen und bestätigen zum Anwenden."
     }
   }
 }

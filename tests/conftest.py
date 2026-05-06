@@ -50,6 +50,7 @@ def mock_config_entry() -> MockConfigEntry:
             CONF_MAX_ITERATIONS: DEFAULT_MAX_ITERATIONS,
             CONF_PRICE_ADAPTER: DEFAULT_PRICE_ADAPTER,
             CONF_SOLVER_BACKEND: DEFAULT_SOLVER_BACKEND,
+            "devices": [],
         },
         unique_id=DOMAIN,
     )

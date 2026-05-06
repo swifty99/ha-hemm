@@ -29,6 +29,11 @@ async def test_options_flow_updates(hass: HomeAssistant, init_integration: Confi
     """Test that options can be updated."""
     result = await hass.config_entries.options.async_init(init_integration.entry_id)
 
+    # Choose settings action
+    result = await hass.config_entries.options.async_configure(result["flow_id"], user_input={"action": "settings"})
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"
+
     new_options = {
         CONF_HORIZON_HOURS: 48,
         CONF_MAX_ITERATIONS: 100,

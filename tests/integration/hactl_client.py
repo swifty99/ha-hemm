@@ -266,3 +266,23 @@ class HactlClient:
             else:
                 data = {"status": "ok"}
             return HactlResult(status=resp.status, data=data)
+
+    async def start_options_flow(self, entry_id: str) -> HactlResult:
+        """Start an options flow for a config entry."""
+        assert self._session is not None
+        async with self._session.post(
+            self._url("/api/config/config_entries/options/flow"),
+            json={"handler": entry_id, "show_advanced_options": False},
+        ) as resp:
+            data = await resp.json()
+            return HactlResult(status=resp.status, data=data)
+
+    async def configure_options_flow(self, flow_id: str, data: dict[str, Any]) -> HactlResult:
+        """Submit data to an options flow step."""
+        assert self._session is not None
+        async with self._session.post(
+            self._url(f"/api/config/config_entries/options/flow/{flow_id}"),
+            json=data,
+        ) as resp:
+            result = await resp.json()
+            return HactlResult(status=resp.status, data=result)

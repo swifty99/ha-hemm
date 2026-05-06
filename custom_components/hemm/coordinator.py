@@ -74,7 +74,18 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return self._price_adapter
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data — stub: returns current config as state."""
+        """Fetch data — returns current config and device plan stubs."""
+        # Build device_plans for each registered device
+        device_plans: dict[str, dict[str, Any]] = {}
+        devices: list[dict[str, Any]] = self.config_entry.data.get("devices", [])
+        for device in devices:
+            device_id = device.get("id", "unknown")
+            device_plans[device_id] = {
+                "power_kw": 0.0,
+                "confidence_pct": 0.0,
+                "mode": "idle",
+            }
+
         return {
             "horizon_hours": self._horizon_hours,
             "max_iterations": self._max_iterations,
@@ -82,4 +93,5 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "solver_backend": self._solver_backend,
             "last_plans": [],
             "iteration_count": 0,
+            "device_plans": device_plans,
         }

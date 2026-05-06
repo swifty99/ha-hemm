@@ -127,3 +127,106 @@ async def test_hemm_reload(ha_client: HactlClient) -> None:
     result = await ha_client.reload_integration(entry_id)
     # Reload should succeed (2xx)
     assert result.status in (200, 201, 204)
+
+
+DEVICE_CONFIGS = [
+    {
+        "device_type": "room",
+        "device_name": "Living Room",
+        "floor_area_m2": 25.0,
+        "insulation_class": "medium",
+        "safe_default_script": "script.hemm_room_safe",
+    },
+    {
+        "device_type": "thermostat_load",
+        "device_name": "Hallway Heater",
+        "max_power_kw": 2.0,
+        "safe_default_script": "script.hemm_thermostat_safe",
+    },
+    {
+        "device_type": "heat_pump",
+        "device_name": "Main Heat Pump",
+        "max_power_kw": 5.0,
+        "safe_default_script": "script.hemm_hp_safe",
+    },
+    {
+        "device_type": "water_heater",
+        "device_name": "Hot Water Tank",
+        "volume_liters": 200.0,
+        "max_power_kw": 3.0,
+        "safe_default_script": "script.hemm_wh_safe",
+    },
+    {
+        "device_type": "battery",
+        "device_name": "House Battery",
+        "capacity_kwh": 10.0,
+        "max_charge_kw": 5.0,
+        "max_discharge_kw": 5.0,
+        "safe_default_script": "script.hemm_battery_safe",
+    },
+    {
+        "device_type": "pv_forecast",
+        "device_name": "Roof PV",
+        "peak_power_kwp": 8.5,
+        "forecast_adapter": "solcast",
+        "safe_default_script": "script.hemm_pv_safe",
+    },
+    {
+        "device_type": "ev_charger",
+        "device_name": "Garage Charger",
+        "max_charge_kw": 11.0,
+        "safe_default_script": "script.hemm_ev_safe",
+    },
+]
+
+
+@pytest.mark.container
+@pytest.mark.parametrize(
+    "device_config",
+    DEVICE_CONFIGS,
+    ids=[d["device_type"] for d in DEVICE_CONFIGS],
+)
+async def test_hemm_add_device_via_options(ha_client: HactlClient, device_config: dict) -> None:
+    """Test adding each of the 7 device types via the options flow."""
+    # Ensure integration exists
+    entries = await ha_client.get_config_entries()
+    hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
+
+    if not hemm_entries:
+        await ha_client.create_config_entry(
+            domain="hemm",
+            data={
+                "name": "HEMM",
+                "horizon_hours": 24,
+                "max_iterations": 50,
+                "price_adapter": "template",
+                "solver_backend": "milp_central",
+            },
+        )
+        entries = await ha_client.get_config_entries()
+        hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
+
+    entry_id = hemm_entries[0]["entry_id"]
+
+    # Start options flow
+    result = await ha_client.start_options_flow(entry_id)
+    assert result.status == 200, f"Failed to start options flow: {result.data}"
+    flow_id = result.data.get("flow_id")
+    assert flow_id, f"No flow_id in response: {result.data}"
+
+    # Step 1: choose "add_device" action
+    result = await ha_client.configure_options_flow(flow_id, {"action": "add_device"})
+    assert result.status == 200, f"Failed action step: {result.data}"
+    assert result.data.get("step_id") == "select_device"
+
+    # Step 2: select device type and tier
+    result = await ha_client.configure_options_flow(
+        flow_id, {"device_type": device_config["device_type"], "tier": "beginner"}
+    )
+    assert result.status == 200, f"Failed select_device step: {result.data}"
+    assert result.data.get("step_id") == "configure_device"
+
+    # Step 3: configure device
+    result = await ha_client.configure_options_flow(flow_id, device_config)
+    assert result.status == 200, f"Failed configure_device step: {result.data}"
+    assert result.data.get("type") == "create_entry", f"Expected create_entry, got: {result.data}"

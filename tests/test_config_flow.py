@@ -49,7 +49,7 @@ async def test_config_flow_creates_entry(hass: HomeAssistant) -> None:
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "My HEMM"
-    assert result["data"] == user_input
+    assert result["data"] == {**user_input, "devices": []}
 
 
 @pytest.mark.unit

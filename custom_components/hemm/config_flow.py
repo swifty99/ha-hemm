@@ -28,6 +28,7 @@ from .const import (
     PRICE_ADAPTERS,
     SOLVER_BACKENDS,
 )
+from .device_flow import HemmDeviceFlowMixin
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -50,7 +51,7 @@ class HemmConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             await self.async_set_unique_id(DOMAIN)
             self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
+            return self.async_create_entry(title=user_input[CONF_NAME], data={**user_input, "devices": []})
 
         return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA)
 
@@ -61,11 +62,28 @@ class HemmConfigFlow(ConfigFlow, domain=DOMAIN):
         return HemmOptionsFlow()
 
 
-class HemmOptionsFlow(OptionsFlow):
-    """Handle HEMM options."""
+class HemmOptionsFlow(HemmDeviceFlowMixin, OptionsFlow):
+    """Handle HEMM options — includes device management."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Manage the options."""
+        """Manage the options — choose between settings and device management."""
+        if user_input is not None:
+            action = user_input.get("action", "settings")
+            if action == "add_device":
+                return await self.async_step_select_device()
+            return await self.async_step_settings()
+
+        schema = vol.Schema(
+            {
+                vol.Required("action", default="settings"): vol.In(
+                    {"settings": "Adjust settings", "add_device": "Add a device"}
+                ),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
+
+    async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Manage hub settings."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
@@ -102,4 +120,4 @@ class HemmOptionsFlow(OptionsFlow):
             }
         )
 
-        return self.async_show_form(step_id="init", data_schema=options_schema)
+        return self.async_show_form(step_id="settings", data_schema=options_schema)
