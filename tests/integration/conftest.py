@@ -21,9 +21,10 @@ CONFIG_DIR = Path(__file__).parent / "config"
 
 
 def pytest_collection_modifyitems(items: list) -> None:
-    """Mark all integration tests with session loop scope."""
+    """Mark all integration tests with session loop scope and enable sockets."""
     for item in items:
         item.add_marker(pytest.mark.asyncio(loop_scope="session"))
+        item.add_marker(pytest.mark.enable_socket)
 
 
 @pytest.fixture(autouse=True)
