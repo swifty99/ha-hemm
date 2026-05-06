@@ -1,18 +1,18 @@
 services:
   homeassistant:
-    image: "ghcr.io/home-assistant/home-assistant:${HA_VERSION:-2025.4}"
+    image: "ghcr.io/home-assistant/home-assistant:${HA_VERSION:-stable}"
     container_name: hemm-ha-test
     volumes:
       - ./custom_components/hemm:/config/custom_components/hemm:ro
-      - ./tests/integration/config:/config:rw
+      - ./tests/integration/config/configuration.yaml:/config/configuration.yaml:ro
     ports:
       - "8123:8123"
     environment:
       - TZ=Europe/Berlin
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8123/api/"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost:8123/api/onboarding"]
+      interval: 5s
+      timeout: 3s
       retries: 30
-      start_period: 60s
+      start_period: 30s
     restart: "no"
