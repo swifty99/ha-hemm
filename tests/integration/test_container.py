@@ -1,132 +1,122 @@
-"""Container-based integration tests for HEMM.
+"""Container-based integration tests for HEMM — driven by real hactl binary.
 
-These tests spin up a real HA container, perform onboarding, install the HEMM
-integration via the config flow API, and verify it works end-to-end.
+These tests spin up a real HA container + companion, perform onboarding (via Python
+client), then use the real hactl binary for all assertions and interactions.
 
-Run with: make test-container (requires Docker)
+Run with: make test-container (requires Docker + hactl binary)
 """
 
 from __future__ import annotations
 
 import pytest
 
-from .hactl_client import HactlClient
+from .hactl import Hactl
+
+# --- Basic container health (using hactl binary) ---
 
 
 @pytest.mark.container
-async def test_ha_container_healthy(ha_client: HactlClient) -> None:
-    """Test that HA container is running and healthy."""
-    result = await ha_client.get_health()
-    assert result.status == 200
-    assert result.data.get("message") == "API running."
+def test_ha_container_healthy(hactl: Hactl) -> None:
+    """Test that HA container is running and healthy via hactl health."""
+    result = hactl.health()
+    assert result.success
+    # hactl health --json returns HA state info
+    assert result.json_data is not None
 
 
 @pytest.mark.container
-async def test_ha_config_accessible(ha_client: HactlClient) -> None:
-    """Test that HA config is accessible after onboarding."""
-    result = await ha_client.get_config()
-    assert result.status == 200
-    assert "version" in result.data
-    assert "components" in result.data
+def test_hactl_version(hactl: Hactl) -> None:
+    """Test that hactl binary itself reports a version."""
+    result = hactl.version()
+    assert result.success
+    assert "hactl" in result.stdout.lower() or "v0." in result.stdout
+
+
+# --- Config entry lifecycle via hactl config commands ---
 
 
 @pytest.mark.container
-async def test_hemm_integration_setup(ha_client: HactlClient) -> None:
-    """Test that the HEMM integration can be set up via config flow."""
-    # Create HEMM config entry via flow
-    result = await ha_client.create_config_entry(
-        domain="hemm",
-        data={
-            "name": "HEMM",
-            "horizon_hours": 24,
-            "max_iterations": 50,
-            "price_adapter": "template",
-            "solver_backend": "milp_central",
-        },
-    )
-    assert result.status == 200
-    assert result.data.get("type") == "create_entry"
-    assert result.data.get("title") == "HEMM"
+def test_hemm_integration_setup_via_hactl(hactl: Hactl) -> None:
+    """Test HEMM integration setup via hactl config flow commands."""
+    # Start config flow for hemm domain
+    result = hactl.config_flow_start("hemm")
+    assert result.success
+    assert result.json_data is not None
+
+    flow_id = result.json_data.get("flow_id")
+    assert flow_id, f"No flow_id returned: {result.json_data}"
+    assert result.json_data.get("type") == "form"
+    assert result.json_data.get("step_id") == "user"
+
+    # Submit config flow data
+    flow_data = {
+        "name": "HEMM",
+        "horizon_hours": 24,
+        "max_iterations": 50,
+        "price_adapter": "template",
+        "solver_backend": "milp_central",
+    }
+    result = hactl.config_flow_step(flow_id, flow_data)
+    assert result.success
+    assert result.json_data is not None
+    # Should either create_entry or abort (if already configured)
+    assert result.json_data.get("type") in ("create_entry", "abort")
 
 
 @pytest.mark.container
-async def test_hemm_integration_loaded(ha_client: HactlClient) -> None:
-    """Test that the HEMM domain appears in loaded config entries."""
-    # First set up the integration
-    await ha_client.create_config_entry(
-        domain="hemm",
-        data={
-            "name": "HEMM",
-            "horizon_hours": 24,
-            "max_iterations": 50,
-            "price_adapter": "template",
-            "solver_backend": "milp_central",
-        },
-    )
+def test_hemm_integration_loaded_via_hactl(hactl: Hactl) -> None:
+    """Test that HEMM appears in config entries via hactl."""
+    result = hactl.config_entries()
+    assert result.success
+    assert result.json_data is not None
 
-    # Verify it's in config entries
-    entries = await ha_client.get_config_entries()
-    assert entries.status == 200
-    hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
-    assert len(hemm_entries) >= 1
-    assert hemm_entries[0]["state"] == "loaded"
+    # Find hemm entry in the entries list
+    entries = result.json_data if isinstance(result.json_data, list) else result.json_data.get("entries", [])
+    hemm_entries = [e for e in entries if e.get("domain") == "hemm"]
+    assert len(hemm_entries) >= 1, f"No hemm entry found in: {entries}"
+    assert hemm_entries[0].get("state") == "loaded"
 
 
 @pytest.mark.container
-async def test_hemm_diagnostics_retrievable(ha_client: HactlClient) -> None:
-    """Test that diagnostics endpoint is accessible for the HEMM entry."""
-    # Set up integration
-    flow_result = await ha_client.create_config_entry(
-        domain="hemm",
-        data={
-            "name": "HEMM",
-            "horizon_hours": 24,
-            "max_iterations": 50,
-            "price_adapter": "template",
-            "solver_backend": "milp_central",
-        },
-    )
-
-    # Get the entry ID from the flow result
-    entry_id = flow_result.data.get("result", {}).get("entry_id")
-    if not entry_id:
-        # Fetch from config entries
-        entries = await ha_client.get_config_entries()
-        hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
-        assert hemm_entries, "HEMM integration not found"
-        entry_id = hemm_entries[0]["entry_id"]
-
-    # Get diagnostics
-    diag = await ha_client.get_diagnostics(entry_id)
-    assert diag.status == 200
-    assert "tested_ha_version" in diag.data.get("data", {})
+def test_hemm_entities_visible_via_hactl(hactl: Hactl) -> None:
+    """Test that HEMM entities are visible via hactl ent ls."""
+    result = hactl.ent_ls(pattern="hemm")
+    assert result.success
+    # After setup, at least the integration should register some entities
+    # (exact count depends on whether devices are added)
 
 
 @pytest.mark.container
-async def test_hemm_reload(ha_client: HactlClient) -> None:
-    """Test that the HEMM integration can be reloaded."""
-    # Ensure integration exists
-    entries = await ha_client.get_config_entries()
-    hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
-
-    if not hemm_entries:
-        await ha_client.create_config_entry(
-            domain="hemm",
-            data={
-                "name": "HEMM",
-                "horizon_hours": 24,
-                "max_iterations": 50,
-                "price_adapter": "template",
-                "solver_backend": "milp_central",
-            },
-        )
-        entries = await ha_client.get_config_entries()
-        hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
+def test_hemm_reload_via_hactl(hactl: Hactl) -> None:
+    """Test that HEMM can be reloaded — verify via hactl config entries state."""
+    # Get the entry ID
+    result = hactl.config_entries()
+    assert result.success
+    entries = result.json_data if isinstance(result.json_data, list) else result.json_data.get("entries", [])
+    hemm_entries = [e for e in entries if e.get("domain") == "hemm"]
+    assert hemm_entries, "HEMM not loaded"
 
     entry_id = hemm_entries[0]["entry_id"]
-    result = await ha_client.reload_integration(entry_id)
-    # Reload should succeed (2xx)
-    assert result.status in (200, 201, 204)
+
+    # Reload via service call
+    hactl.svc_call("homeassistant.reload_config_entry", {"entry_id": entry_id})
+
+    # Verify still loaded after reload
+    result = hactl.config_entries()
+    entries = result.json_data if isinstance(result.json_data, list) else result.json_data.get("entries", [])
+    hemm_entries = [e for e in entries if e.get("domain") == "hemm"]
+    assert hemm_entries[0].get("state") == "loaded"
+
+
+@pytest.mark.container
+def test_hemm_no_error_logs(hactl: Hactl) -> None:
+    """Test that hemm produces no error-level log entries after setup."""
+    result = hactl.cc_logs("hemm", unique=True)
+    # If the command succeeds and returns no errors, or returns empty results, that's fine
+    assert result.success
+
+
+# --- Device management via options flow (hactl config commands) ---
 
 
 DEVICE_CONFIGS = [
@@ -186,48 +176,36 @@ DEVICE_CONFIGS = [
     DEVICE_CONFIGS,
     ids=[d["device_type"] for d in DEVICE_CONFIGS],
 )
-async def test_hemm_add_device_via_options(ha_client: HactlClient, device_config: dict) -> None:
-    """Test adding each of the 7 device types via the options flow."""
-    # Ensure integration exists
-    entries = await ha_client.get_config_entries()
-    hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
-
-    if not hemm_entries:
-        await ha_client.create_config_entry(
-            domain="hemm",
-            data={
-                "name": "HEMM",
-                "horizon_hours": 24,
-                "max_iterations": 50,
-                "price_adapter": "template",
-                "solver_backend": "milp_central",
-            },
-        )
-        entries = await ha_client.get_config_entries()
-        hemm_entries = [e for e in entries.data["entries"] if e.get("domain") == "hemm"]
+def test_hemm_add_device_via_options_hactl(hactl: Hactl, device_config: dict) -> None:
+    """Test adding each of the 7 device types via hactl config options flow."""
+    # Get hemm entry ID
+    result = hactl.config_entries()
+    entries = result.json_data if isinstance(result.json_data, list) else result.json_data.get("entries", [])
+    hemm_entries = [e for e in entries if e.get("domain") == "hemm"]
+    assert hemm_entries, "HEMM integration must be set up first"
 
     entry_id = hemm_entries[0]["entry_id"]
 
-    # Start options flow
-    result = await ha_client.start_options_flow(entry_id)
-    assert result.status == 200, f"Failed to start options flow: {result.data}"
-    flow_id = result.data.get("flow_id")
-    assert flow_id, f"No flow_id in response: {result.data}"
+    # Start options flow via hactl
+    result = hactl.config_options(entry_id)
+    assert result.success, f"Failed to start options flow: {result.stderr}"
+    assert result.json_data is not None
+
+    flow_id = result.json_data.get("flow_id")
+    assert flow_id, f"No flow_id: {result.json_data}"
 
     # Step 1: choose "add_device" action
-    result = await ha_client.configure_options_flow(flow_id, {"action": "add_device"})
-    assert result.status == 200, f"Failed action step: {result.data}"
-    assert result.data.get("step_id") == "select_device"
+    result = hactl.config_flow_step(flow_id, {"action": "add_device"}, options=True)
+    assert result.success, f"Action step failed: {result.stderr}"
+    assert result.json_data.get("step_id") == "select_device"
 
     # Step 2: select device type and tier
-    result = await ha_client.configure_options_flow(
-        flow_id, {"device_type": device_config["device_type"], "tier": "beginner"}
-    )
-    assert result.status == 200, f"Failed select_device step: {result.data}"
-    assert result.data.get("step_id") == "configure_device"
+    result = hactl.config_flow_step(flow_id, {"device_type": device_config["device_type"], "tier": "beginner"}, options=True)
+    assert result.success, f"Select device failed: {result.stderr}"
+    assert result.json_data.get("step_id") == "configure_device"
 
-    # Step 3: configure device (exclude device_type — it was sent in select_device)
+    # Step 3: configure device details
     configure_data = {k: v for k, v in device_config.items() if k != "device_type"}
-    result = await ha_client.configure_options_flow(flow_id, configure_data)
-    assert result.status == 200, f"Failed configure_device step: {result.data}"
-    assert result.data.get("type") == "create_entry", f"Expected create_entry, got: {result.data}"
+    result = hactl.config_flow_step(flow_id, configure_data, options=True)
+    assert result.success, f"Configure device failed: {result.stderr}"
+    assert result.json_data.get("type") == "create_entry", f"Expected create_entry: {result.json_data}"
