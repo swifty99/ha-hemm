@@ -24,6 +24,7 @@ services:
   companion:
     image: "ghcr.io/swifty99/hactl_companion:${COMPANION_VERSION:-latest}"
     container_name: hemm-companion-test
+    command: ["python3", "-m", "companion"]
     environment:
       - SUPERVISOR_TOKEN=integration-test-token-12345
     volumes:
@@ -31,7 +32,7 @@ services:
     ports:
       - "9100:9100"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9100/v1/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9100/v1/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 20

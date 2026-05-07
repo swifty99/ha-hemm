@@ -30,7 +30,18 @@ def pytest_collection_modifyitems(items: list) -> None:
     try:
         import pytest_socket
         pytest_socket.enable_socket()
-    except ImportError:
+        pytest_socket.disable_socket = lambda *a, **kw: None
+        pytest_socket.socket_allow_hosts = lambda *a, **kw: None
+    except (ImportError, AttributeError):
+        pass
+
+
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    """Force-enable sockets before each integration test."""
+    try:
+        import pytest_socket
+        pytest_socket.enable_socket()
+    except (ImportError, AttributeError):
         pass
 
 

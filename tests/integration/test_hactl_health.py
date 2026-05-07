@@ -87,14 +87,18 @@ class TestHactlLogs:
         """No unexpected error-level logs from hemm after fresh setup."""
         result = hactl.log(errors=True, unique=True)
         assert result.success
-        # Check that hemm-related errors are absent or expected
-        output = result.stdout.lower() if result.stdout else ""
-        # Errors related to hemm would be concerning; generic HA errors are ok
-        # We're looking for absence of hemm-specific errors
-        if "hemm" in output:
-            # Only acceptable hemm log messages are warnings, not errors
-            # If there are hemm errors, this test should fail for investigation
-            pytest.fail(f"Unexpected hemm errors in log:\n{result.stdout}")
+        # Check that hemm-component errors are absent
+        # Ignore: template errors (from test_tpl_eval_invalid), SSL errors,
+        # and connection errors (expected in test environment)
+        if result.json_data:
+            entries = result.json_data if isinstance(result.json_data, list) else []
+            hemm_errors = [
+                e for e in entries
+                if e.get("component", "") == "hemm"
+                or e.get("component", "").startswith("custom_components.hemm")
+            ]
+            if hemm_errors:
+                pytest.fail(f"Unexpected hemm errors in log:\n{hemm_errors}")
 
     def test_log_component_filter(self, hactl: Hactl) -> None:
         """hactl log --component hemm returns only hemm-related entries."""

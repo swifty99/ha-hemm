@@ -1,12 +1,19 @@
-.PHONY: test test-container test-pi test-slow ci ci-full lint format install-hactl
+.PHONY: test test-container test-pi test-slow ci ci-full lint format install-hactl docker-up docker-down docker-reset
 
 ## Default: fast unit tests only
 test:
 	uv run pytest
 
 ## Container-based integration tests (Docker required)
-test-container: install-hactl
-	uv run pytest -m container
+## Starts fresh stack, installs hemm, runs tests, tears down
+test-container: install-hactl docker-up
+	@echo "Running container integration tests..."
+	uv run pytest -m container --tb=short -q
+	@$(MAKE) docker-down
+
+## Container tests against already-running stack (faster iteration)
+test-container-quick: install-hactl
+	SKIP_DOCKER_COMPOSE=1 uv run pytest -m container --tb=short -q
 
 ## Pi hardware tests (manual / self-hosted runner)
 test-pi:
@@ -31,6 +38,59 @@ lint:
 format:
 	uv run ruff format custom_components/ tests/
 	uv run ruff check --fix custom_components/ tests/
+
+## --- Docker Stack Management ---
+
+## Start HA + companion containers, install hemm, restart HA
+docker-up:
+	@echo "Starting HA + companion stack..."
+	docker compose -f docker-compose.test.yml up -d
+	@echo "Waiting for HA to be healthy..."
+ifeq ($(OS),Windows_NT)
+	@powershell -Command "do { Start-Sleep -Milliseconds 2000; $$s = docker inspect --format '{{.State.Health.Status}}' hemm-ha-test 2>$$null } while ($$s -ne 'healthy'); Write-Host 'HA healthy'"
+else
+	@while [ "$$(docker inspect --format '{{.State.Health.Status}}' hemm-ha-test 2>/dev/null)" != "healthy" ]; do sleep 2; done; echo "HA healthy"
+endif
+	@echo "Installing hemm package in container..."
+	docker exec hemm-ha-test pip install /hemm-src 2>&1 | tail -1
+	@echo "Restarting HA to load hemm..."
+	docker restart hemm-ha-test
+ifeq ($(OS),Windows_NT)
+	@powershell -Command "do { Start-Sleep -Milliseconds 2000; $$s = docker inspect --format '{{.State.Health.Status}}' hemm-ha-test 2>$$null } while ($$s -ne 'healthy'); Write-Host 'HA ready with hemm'"
+else
+	@while [ "$$(docker inspect --format '{{.State.Health.Status}}' hemm-ha-test 2>/dev/null)" != "healthy" ]; do sleep 2; done; echo "HA ready with hemm"
+endif
+	@echo "Waiting for companion..."
+ifeq ($(OS),Windows_NT)
+	@powershell -Command "do { Start-Sleep -Milliseconds 2000; $$s = docker inspect --format '{{.State.Health.Status}}' hemm-companion-test 2>$$null } while ($$s -eq 'starting'); Write-Host \"companion: $$s\""
+else
+	@while [ "$$(docker inspect --format '{{.State.Health.Status}}' hemm-companion-test 2>/dev/null)" = "starting" ]; do sleep 2; done; echo "companion: $$(docker inspect --format '{{.State.Health.Status}}' hemm-companion-test)"
+endif
+	@echo "Stack ready!"
+
+## Stop and remove containers + volumes
+docker-down:
+	docker compose -f docker-compose.test.yml down -v --remove-orphans
+ifeq ($(OS),Windows_NT)
+	@if exist .bin\.ha_test_token del .bin\.ha_test_token
+else
+	@rm -f .bin/.ha_test_token
+endif
+
+## Full reset: down + fresh up
+docker-reset: docker-down docker-up
+
+## Show stack status
+docker-status:
+	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" --filter name=hemm
+
+## Show HA logs (last 20 lines)
+docker-logs:
+	docker logs hemm-ha-test --tail 20
+
+## Show companion logs
+docker-logs-companion:
+	docker logs hemm-companion-test --tail 20
 
 ## Install hactl binary (downloads latest release from GitHub)
 install-hactl:
