@@ -245,8 +245,12 @@ def _wait_for_ha(base_url: str, timeout: float = 120.0) -> None:
         try:
             req = urllib.request.Request(f"{base_url}/api/")
             with urllib.request.urlopen(req, timeout=5) as resp:
-                if resp.status in (200, 401):
+                if resp.status == 200:
                     return
+        except urllib.error.HTTPError as e:
+            # 401 means HA is running but we're unauthenticated — that's fine
+            if e.code == 401:
+                return
         except Exception:
             pass
         time.sleep(2)
