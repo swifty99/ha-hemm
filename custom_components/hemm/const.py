@@ -84,6 +84,26 @@ FORECAST_ADAPTERS = ["solcast", "forecast_solar", "template"]
 # Tested HA version (set at build time / release)
 TESTED_HA_VERSION = "2025.4.0"
 
+# Service names
+SERVICE_REPLAN = "replan"
+SERVICE_SIMULATE = "simulate"
+SERVICE_SET_PRICE_CURVE = "set_price_curve"
+SERVICE_SET_SOLVER = "set_solver"
+SERVICE_ADD_CONSTRAINT = "add_constraint_window"
+SERVICE_REMOVE_CONSTRAINT = "remove_constraint"
+SERVICE_BUMP_PRIORITY = "bump_priority"
+SERVICE_TICK = "tick"
+
+# Event names
+EVENT_ITERATION_COMPLETE = f"{DOMAIN}_iteration_complete"
+EVENT_CONSTRAINT_ADDED = f"{DOMAIN}_constraint_added"
+EVENT_CONSTRAINT_RESOLVED = f"{DOMAIN}_constraint_resolved"
+EVENT_SOLVER_SWITCHED = f"{DOMAIN}_solver_switched"
+EVENT_DRY_RUN_COMPLETED = f"{DOMAIN}_dry_run_completed"
+
+# Dry-run attribute
+ATTR_DRY_RUN = "dry_run"
+
 
 class DeviceType(StrEnum):
     """Device types matching hemm core ManifestType."""

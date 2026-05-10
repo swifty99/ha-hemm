@@ -72,5 +72,147 @@
       "title": "Model update available for {device_name}",
       "description": "Online identification suggests updated parameters for {device_name}. Review and confirm to apply."
     }
+  },
+  "services": {
+    "replan": {
+      "name": "Replan",
+      "description": "Trigger an immediate optimization run.",
+      "fields": {
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Run the optimizer without applying results."
+        }
+      }
+    },
+    "simulate": {
+      "name": "Simulate",
+      "description": "Run a simulation (always dry run).",
+      "fields": {
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Always true for simulate."
+        },
+        "horizon_hours": {
+          "name": "Horizon hours",
+          "description": "Override planning horizon for this simulation."
+        }
+      }
+    },
+    "set_price_curve": {
+      "name": "Set price curve",
+      "description": "Manually set electricity prices for the next optimization.",
+      "fields": {
+        "prices": {
+          "name": "Prices",
+          "description": "List of prices in EUR/kWh per time slot."
+        },
+        "resolution_minutes": {
+          "name": "Resolution",
+          "description": "Time slot resolution in minutes (default 15)."
+        },
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Set prices without applying."
+        }
+      }
+    },
+    "set_solver": {
+      "name": "Set solver",
+      "description": "Switch the active solver backend at runtime.",
+      "fields": {
+        "backend": {
+          "name": "Backend",
+          "description": "Solver backend: milp_central or distributed."
+        },
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Switch without applying."
+        }
+      }
+    },
+    "add_constraint_window": {
+      "name": "Add constraint window",
+      "description": "Register a time-bound constraint for a device.",
+      "fields": {
+        "window_id": {
+          "name": "Window ID",
+          "description": "Unique identifier for this constraint window."
+        },
+        "device_id": {
+          "name": "Device ID",
+          "description": "Target device for the constraint."
+        },
+        "deadline": {
+          "name": "Deadline",
+          "description": "When the constraint must be satisfied."
+        },
+        "requirement_type": {
+          "name": "Requirement type",
+          "description": "Constraint type (e.g. min_soc_until, reach_min_temp_once)."
+        },
+        "requirement_value": {
+          "name": "Requirement value",
+          "description": "Numeric value for the constraint."
+        },
+        "flex_cost_per_hour_early": {
+          "name": "Flex cost",
+          "description": "EUR penalty per hour pulled forward from deadline."
+        },
+        "priority_penalty": {
+          "name": "Priority",
+          "description": "Priority weight — higher wins in conflicts."
+        },
+        "ttl_seconds": {
+          "name": "TTL",
+          "description": "Time-to-live in seconds."
+        },
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Add without applying."
+        }
+      }
+    },
+    "remove_constraint": {
+      "name": "Remove constraint",
+      "description": "Remove a constraint window by ID.",
+      "fields": {
+        "window_id": {
+          "name": "Window ID",
+          "description": "ID of the constraint window to remove."
+        },
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Remove without applying."
+        }
+      }
+    },
+    "bump_priority": {
+      "name": "Bump priority",
+      "description": "Update the priority penalty of a constraint window.",
+      "fields": {
+        "window_id": {
+          "name": "Window ID",
+          "description": "ID of the constraint window."
+        },
+        "new_penalty": {
+          "name": "New penalty",
+          "description": "New priority penalty value."
+        },
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Update without applying."
+        }
+      }
+    },
+    "tick": {
+      "name": "Tick",
+      "description": "Manually trigger one optimizer cycle.",
+      "fields": {
+        "dry_run": {
+          "name": "Dry run",
+          "description": "Run without applying results."
+        }
+      }
+    }
   }
 }
