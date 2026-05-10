@@ -158,11 +158,15 @@ class TestManifestBuilder:
 
         devices = [
             _make_device(DeviceType.ROOM, id="d1", **{CONF_FLOOR_AREA_M2: 20.0}),
-            _make_device(DeviceType.BATTERY, id="d2", **{
-                CONF_CAPACITY_KWH: 5.0,
-                CONF_MAX_CHARGE_KW: 3.0,
-                CONF_MAX_DISCHARGE_KW: 3.0,
-            }),
+            _make_device(
+                DeviceType.BATTERY,
+                id="d2",
+                **{
+                    CONF_CAPACITY_KWH: 5.0,
+                    CONF_MAX_CHARGE_KW: 3.0,
+                    CONF_MAX_DISCHARGE_KW: 3.0,
+                },
+            ),
         ]
         manifests = build_all_manifests(devices)
         assert len(manifests) == 2

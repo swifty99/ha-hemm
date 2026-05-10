@@ -44,9 +44,9 @@ async def async_get_config_entry_diagnostics(
             "solve_time_seconds": last_result.solve_time_seconds,
             "iterations": last_result.iterations,
             "plan_count": len(last_result.plans),
-            "solver_diagnostics": {
-                str(k): str(v) for k, v in last_result.diagnostics.items()
-            } if last_result.diagnostics else {},
+            "solver_diagnostics": {str(k): str(v) for k, v in last_result.diagnostics.items()}
+            if last_result.diagnostics
+            else {},
         }
 
     return {

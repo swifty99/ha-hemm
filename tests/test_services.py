@@ -33,9 +33,7 @@ async def test_services_registered(hass: HomeAssistant, init_integration: Config
 
 
 @pytest.mark.unit
-async def test_services_unregistered_on_unload(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_services_unregistered_on_unload(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test that services are unregistered when the last entry is unloaded."""
     await hass.config_entries.async_unload(init_integration.entry_id)
     await hass.async_block_till_done()
@@ -45,9 +43,7 @@ async def test_services_unregistered_on_unload(
 
 
 @pytest.mark.unit
-async def test_coordinator_stub_mode(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_coordinator_stub_mode(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test coordinator operates in stub mode when hemm core is unavailable."""
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
     assert coordinator.data is not None
@@ -57,9 +53,7 @@ async def test_coordinator_stub_mode(
 
 
 @pytest.mark.unit
-async def test_coordinator_properties_phase6(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_coordinator_properties_phase6(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test new coordinator properties from Phase 6."""
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
     assert coordinator.last_result is None  # No solver run in stub mode
@@ -68,9 +62,7 @@ async def test_coordinator_properties_phase6(
 
 
 @pytest.mark.unit
-async def test_coordinator_switch_solver(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_coordinator_switch_solver(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test solver switching fires event."""
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
 
@@ -87,16 +79,12 @@ async def test_coordinator_switch_solver(
 
 
 @pytest.mark.unit
-async def test_service_set_solver(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_service_set_solver(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test hemm.set_solver service call."""
     events = []
     hass.bus.async_listen(EVENT_SOLVER_SWITCHED, lambda e: events.append(e))
 
-    await hass.services.async_call(
-        DOMAIN, SERVICE_SET_SOLVER, {"backend": "distributed"}, blocking=True
-    )
+    await hass.services.async_call(DOMAIN, SERVICE_SET_SOLVER, {"backend": "distributed"}, blocking=True)
     await hass.async_block_till_done()
 
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
@@ -105,9 +93,7 @@ async def test_service_set_solver(
 
 
 @pytest.mark.unit
-async def test_service_set_solver_dry_run(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_service_set_solver_dry_run(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test hemm.set_solver with dry_run doesn't change backend."""
     await hass.services.async_call(
         DOMAIN, SERVICE_SET_SOLVER, {"backend": "distributed", "dry_run": True}, blocking=True
@@ -119,9 +105,7 @@ async def test_service_set_solver_dry_run(
 
 
 @pytest.mark.unit
-async def test_coordinator_data_keys(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_coordinator_data_keys(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test coordinator data contains all Phase 6 keys."""
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
     data = coordinator.data
@@ -134,9 +118,7 @@ async def test_coordinator_data_keys(
 
 
 @pytest.mark.unit
-async def test_diagnostics_extended(
-    hass: HomeAssistant, init_integration: ConfigEntry
-) -> None:
+async def test_diagnostics_extended(hass: HomeAssistant, init_integration: ConfigEntry) -> None:
     """Test extended diagnostics output."""
     from custom_components.hemm.diagnostics import async_get_config_entry_diagnostics
 

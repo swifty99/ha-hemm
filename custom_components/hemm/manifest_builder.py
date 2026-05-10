@@ -106,9 +106,7 @@ def build_all_manifests(devices: list[dict[str, Any]]) -> list[Any]:
     return [build_manifest(d) for d in devices]
 
 
-def _build_room(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_room(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import RoomManifest
 
     return RoomManifest(
@@ -124,9 +122,7 @@ def _build_room(
     )
 
 
-def _build_thermostat_load(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_thermostat_load(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import ThermostatLoadManifest
 
     return ThermostatLoadManifest(
@@ -138,9 +134,7 @@ def _build_thermostat_load(
     )
 
 
-def _build_heat_pump(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_heat_pump(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import HeatPumpManifest
 
     return HeatPumpManifest(
@@ -154,9 +148,7 @@ def _build_heat_pump(
     )
 
 
-def _build_water_heater(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_water_heater(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import WaterHeaterManifest
 
     return WaterHeaterManifest(
@@ -171,9 +163,7 @@ def _build_water_heater(
     )
 
 
-def _build_battery(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_battery(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import BatteryManifest
 
     return BatteryManifest(
@@ -190,9 +180,7 @@ def _build_battery(
     )
 
 
-def _build_pv_forecast(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_pv_forecast(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import PVForecastManifest
 
     return PVForecastManifest(
@@ -207,9 +195,7 @@ def _build_pv_forecast(
     )
 
 
-def _build_ev_charger(
-    device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]
-) -> Any:
+def _build_ev_charger(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
     from hemm.manifest.types import EVChargerManifest
 
     return EVChargerManifest(

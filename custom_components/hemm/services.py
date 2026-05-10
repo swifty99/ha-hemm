@@ -45,15 +45,18 @@ def _init_requirement_builders() -> None:
         MinSocUntil,
         ReachMinTempOnce,
     )
-    _REQUIREMENT_BUILDERS.update({
-        "reach_min_temp_once": ReachMinTempOnce,
-        "hold_temp_band": HoldTempBand,
-        "min_soc_until": MinSocUntil,
-        "min_energy_until": MinEnergyUntil,
-        "forbidden_window": ForbiddenWindow,
-        "min_runtime_per_day": MinRuntimePerDay,
-        "max_runtime_per_day": MaxRuntimePerDay,
-    })
+
+    _REQUIREMENT_BUILDERS.update(
+        {
+            "reach_min_temp_once": ReachMinTempOnce,
+            "hold_temp_band": HoldTempBand,
+            "min_soc_until": MinSocUntil,
+            "min_energy_until": MinEnergyUntil,
+            "forbidden_window": ForbiddenWindow,
+            "min_runtime_per_day": MinRuntimePerDay,
+            "max_runtime_per_day": MaxRuntimePerDay,
+        }
+    )
 
 
 def _build_requirement(req_type: str, req_params: dict[str, Any]) -> Any:
@@ -78,52 +81,68 @@ def _get_coordinator(hass: HomeAssistant) -> HemmCoordinator:
     return next(iter(entries.values()))
 
 
-REPLAN_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+REPLAN_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-SIMULATE_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-    vol.Optional("horizon_hours"): vol.Coerce(int),
-})
+SIMULATE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+        vol.Optional("horizon_hours"): vol.Coerce(int),
+    }
+)
 
-SET_PRICE_CURVE_SCHEMA = vol.Schema({
-    vol.Required("prices"): vol.All(cv.ensure_list, [vol.Coerce(float)]),
-    vol.Optional("resolution_minutes", default=15): vol.Coerce(int),
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+SET_PRICE_CURVE_SCHEMA = vol.Schema(
+    {
+        vol.Required("prices"): vol.All(cv.ensure_list, [vol.Coerce(float)]),
+        vol.Optional("resolution_minutes", default=15): vol.Coerce(int),
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-SET_SOLVER_SCHEMA = vol.Schema({
-    vol.Required("backend"): vol.In(SOLVER_BACKENDS),
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+SET_SOLVER_SCHEMA = vol.Schema(
+    {
+        vol.Required("backend"): vol.In(SOLVER_BACKENDS),
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-ADD_CONSTRAINT_SCHEMA = vol.Schema({
-    vol.Required("window_id"): cv.string,
-    vol.Required("device_id"): cv.string,
-    vol.Required("deadline"): cv.datetime,
-    vol.Required("requirement_type"): cv.string,
-    vol.Optional("requirement_params", default={}): dict,
-    vol.Optional("flex_cost_per_hour_early", default=0.0): vol.Coerce(float),
-    vol.Optional("priority_penalty", default=1.0): vol.Coerce(float),
-    vol.Optional("ttl_seconds"): vol.Coerce(float),
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+ADD_CONSTRAINT_SCHEMA = vol.Schema(
+    {
+        vol.Required("window_id"): cv.string,
+        vol.Required("device_id"): cv.string,
+        vol.Required("deadline"): cv.datetime,
+        vol.Required("requirement_type"): cv.string,
+        vol.Optional("requirement_params", default={}): dict,
+        vol.Optional("flex_cost_per_hour_early", default=0.0): vol.Coerce(float),
+        vol.Optional("priority_penalty", default=1.0): vol.Coerce(float),
+        vol.Optional("ttl_seconds"): vol.Coerce(float),
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-REMOVE_CONSTRAINT_SCHEMA = vol.Schema({
-    vol.Required("window_id"): cv.string,
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+REMOVE_CONSTRAINT_SCHEMA = vol.Schema(
+    {
+        vol.Required("window_id"): cv.string,
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-BUMP_PRIORITY_SCHEMA = vol.Schema({
-    vol.Required("window_id"): cv.string,
-    vol.Required("new_penalty"): vol.Coerce(float),
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+BUMP_PRIORITY_SCHEMA = vol.Schema(
+    {
+        vol.Required("window_id"): cv.string,
+        vol.Required("new_penalty"): vol.Coerce(float),
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
-TICK_SCHEMA = vol.Schema({
-    vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
-})
+TICK_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_DRY_RUN, default=False): cv.boolean,
+    }
+)
 
 
 async def async_register_services(hass: HomeAssistant) -> None:
@@ -191,7 +210,9 @@ async def async_register_services(hass: HomeAssistant) -> None:
 
         _LOGGER.info(
             "hemm.add_constraint_window: id=%s device=%s (dry_run=%s)",
-            window.window_id, window.device_id, dry_run,
+            window.window_id,
+            window.device_id,
+            dry_run,
         )
         if not dry_run:
             coordinator.add_constraint_window(window)
@@ -213,7 +234,9 @@ async def async_register_services(hass: HomeAssistant) -> None:
         dry_run = call.data.get(ATTR_DRY_RUN, False)
         _LOGGER.info(
             "hemm.bump_priority: id=%s penalty=%s (dry_run=%s)",
-            window_id, new_penalty, dry_run,
+            window_id,
+            new_penalty,
+            dry_run,
         )
         if not dry_run:
             coordinator.bump_priority(window_id, new_penalty)
@@ -233,7 +256,9 @@ async def async_register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_SET_PRICE_CURVE, handle_set_price_curve, schema=SET_PRICE_CURVE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SET_SOLVER, handle_set_solver, schema=SET_SOLVER_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_ADD_CONSTRAINT, handle_add_constraint, schema=ADD_CONSTRAINT_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_REMOVE_CONSTRAINT, handle_remove_constraint, schema=REMOVE_CONSTRAINT_SCHEMA)
+    hass.services.async_register(
+        DOMAIN, SERVICE_REMOVE_CONSTRAINT, handle_remove_constraint, schema=REMOVE_CONSTRAINT_SCHEMA
+    )
     hass.services.async_register(DOMAIN, SERVICE_BUMP_PRIORITY, handle_bump_priority, schema=BUMP_PRIORITY_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_TICK, handle_tick, schema=TICK_SCHEMA)
 

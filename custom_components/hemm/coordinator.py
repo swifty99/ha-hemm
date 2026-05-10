@@ -157,10 +157,7 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception:
             _LOGGER.warning("Price adapter '%s' failed, using flat price", self._price_adapter)
             now = datetime.now(tz=UTC)
-            return [
-                (now + timedelta(minutes=i * 15), 0.30)
-                for i in range(self._horizon_hours * 4)
-            ]
+            return [(now + timedelta(minutes=i * 15), 0.30) for i in range(self._horizon_hours * 4)]
 
     def switch_solver(self, backend: str) -> None:
         """Switch the active solver backend at runtime."""
@@ -251,13 +248,15 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._previous_plans = result.plans
 
         # Record lambda history
-        self._lambda_history.append({
-            "iteration": self._iteration_count,
-            "timestamp": now.isoformat(),
-            "status": result.status.value,
-            "objective": result.objective_value,
-            "solve_time": result.solve_time_seconds,
-        })
+        self._lambda_history.append(
+            {
+                "iteration": self._iteration_count,
+                "timestamp": now.isoformat(),
+                "status": result.status.value,
+                "objective": result.objective_value,
+                "solve_time": result.solve_time_seconds,
+            }
+        )
 
         # Fire iteration complete event
         self.hass.bus.async_fire(
@@ -286,20 +285,20 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 continue
 
             # Pass empty observations for now (stubs return None)
-            id_result = await self.hass.async_add_executor_job(
-                identifier.identify, []
-            )
+            id_result = await self.hass.async_add_executor_job(identifier.identify, [])
             if id_result is not None:
                 id_result.device_id = device_id
                 results.append(id_result)
-                self._id_results.append({
-                    "timestamp": datetime.now(tz=UTC).isoformat(),
-                    "device_id": device_id,
-                    "device_type": device_type,
-                    "updates": id_result.parameter_updates,
-                    "confidence": id_result.confidence,
-                    "message": id_result.message,
-                })
+                self._id_results.append(
+                    {
+                        "timestamp": datetime.now(tz=UTC).isoformat(),
+                        "device_id": device_id,
+                        "device_type": device_type,
+                        "updates": id_result.parameter_updates,
+                        "confidence": id_result.confidence,
+                        "message": id_result.message,
+                    }
+                )
 
         return results
 
@@ -339,9 +338,7 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if result.status in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE):
             # Map plans to device IDs
-            plan_map: dict[str, PlanMessage] = {
-                p.device_id: p for p in result.plans
-            }
+            plan_map: dict[str, PlanMessage] = {p.device_id: p for p in result.plans}
             for device in devices:
                 device_id = device.get("id", "unknown")
                 plan = plan_map.get(device_id)
@@ -382,4 +379,3 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "last_status": result.status.value,
             "last_solve_time": result.solve_time_seconds,
         }
-
