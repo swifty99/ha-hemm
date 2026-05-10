@@ -84,23 +84,32 @@ class TestDeviceAddRemoveCycle:
     """Test adding and removing devices in sequence."""
 
     DEVICE_CONFIGS: ClassVar[list[tuple[str, dict[str, object]]]] = [
-        ("battery", {
-            "device_name": "Cycle Battery",
-            "capacity_kwh": 10.0,
-            "max_charge_kw": 5.0,
-            "max_discharge_kw": 5.0,
-            "safe_default_script": "script.hemm_battery_safe",
-        }),
-        ("ev_charger", {
-            "device_name": "Cycle EV",
-            "max_charge_kw": 11.0,
-            "safe_default_script": "script.hemm_ev_safe",
-        }),
-        ("heat_pump", {
-            "device_name": "Cycle HP",
-            "max_power_kw": 5.0,
-            "safe_default_script": "script.hemm_hp_safe",
-        }),
+        (
+            "battery",
+            {
+                "device_name": "Cycle Battery",
+                "capacity_kwh": 10.0,
+                "max_charge_kw": 5.0,
+                "max_discharge_kw": 5.0,
+                "safe_default_script": "script.hemm_battery_safe",
+            },
+        ),
+        (
+            "ev_charger",
+            {
+                "device_name": "Cycle EV",
+                "max_charge_kw": 11.0,
+                "safe_default_script": "script.hemm_ev_safe",
+            },
+        ),
+        (
+            "heat_pump",
+            {
+                "device_name": "Cycle HP",
+                "max_power_kw": 5.0,
+                "safe_default_script": "script.hemm_hp_safe",
+            },
+        ),
     ]
 
     def test_add_three_devices_sequentially(self, hactl: Hactl) -> None:
@@ -114,9 +123,7 @@ class TestDeviceAddRemoveCycle:
             hactl.config_flow_step(flow_id, {"action": "add_device"}, options=True)
             hactl.config_flow_step(flow_id, {"device_type": device_type, "tier": "beginner"}, options=True)
             result = hactl.config_flow_step(flow_id, config, options=True)
-            assert result.json_data.get("type") == "create_entry", (
-                f"Failed to add {device_type}: {result.json_data}"
-            )
+            assert result.json_data.get("type") == "create_entry", f"Failed to add {device_type}: {result.json_data}"
 
         # Verify integration still healthy
         result = hactl.config_entries()

@@ -93,9 +93,9 @@ class TestHactlLogs:
         if result.json_data:
             entries = result.json_data if isinstance(result.json_data, list) else []
             hemm_errors = [
-                e for e in entries
-                if e.get("component", "") == "hemm"
-                or e.get("component", "").startswith("custom_components.hemm")
+                e
+                for e in entries
+                if e.get("component", "") == "hemm" or e.get("component", "").startswith("custom_components.hemm")
             ]
             if hemm_errors:
                 pytest.fail(f"Unexpected hemm errors in log:\n{hemm_errors}")

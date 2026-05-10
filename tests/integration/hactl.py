@@ -88,7 +88,9 @@ class Hactl:
                 timeout=timeout or self._timeout,
             )
         except subprocess.TimeoutExpired as e:
-            raise HactlError(cmd, HactlOutput(returncode=-1, stdout="", stderr=f"Timeout after {self._timeout}s")) from e
+            raise HactlError(
+                cmd, HactlOutput(returncode=-1, stdout="", stderr=f"Timeout after {self._timeout}s")
+            ) from e
 
         output = HactlOutput(
             returncode=result.returncode,
@@ -191,10 +193,13 @@ class Hactl:
         ha_token = env.get("HA_TOKEN", "")
 
         url = f"{ha_url}/api/config/config_entries/entry"
-        req = urllib.request.Request(url, headers={
-            "Authorization": f"Bearer {ha_token}",
-            "Content-Type": "application/json",
-        })
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Authorization": f"Bearer {ha_token}",
+                "Content-Type": "application/json",
+            },
+        )
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 raw = resp.read().decode()
@@ -361,6 +366,7 @@ def get_hactl_download_url() -> str:
     req = urllib.request.Request(api_url, headers={"Accept": "application/vnd.github+json"})
     with urllib.request.urlopen(req) as resp:
         import json as _json
+
         data = _json.loads(resp.read())
 
     tag = data["tag_name"]  # e.g. "v0.5.0"

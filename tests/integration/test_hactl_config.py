@@ -99,13 +99,16 @@ class TestConfigFlowComplete:
         result = hactl.config_flow_start("hemm")
         flow_id = result.json_data["flow_id"]
 
-        result = hactl.config_flow_step(flow_id, {
-            "name": "Another HEMM",
-            "horizon_hours": 48,
-            "max_iterations": 100,
-            "price_adapter": "solcast",
-            "solver_backend": "distributed",
-        })
+        result = hactl.config_flow_step(
+            flow_id,
+            {
+                "name": "Another HEMM",
+                "horizon_hours": 48,
+                "max_iterations": 100,
+                "price_adapter": "solcast",
+                "solver_backend": "distributed",
+            },
+        )
         assert result.success
         assert result.json_data.get("type") == "abort"
         assert result.json_data.get("reason") == "already_configured"
@@ -175,13 +178,17 @@ class TestOptionsFlow:
         assert result.json_data.get("step_id") == "configure_device"
 
         # Step 3: configure
-        result = hactl.config_flow_step(flow_id, {
-            "device_name": "Test Battery",
-            "capacity_kwh": 10.0,
-            "max_charge_kw": 5.0,
-            "max_discharge_kw": 5.0,
-            "safe_default_script": "script.hemm_battery_safe",
-        }, options=True)
+        result = hactl.config_flow_step(
+            flow_id,
+            {
+                "device_name": "Test Battery",
+                "capacity_kwh": 10.0,
+                "max_charge_kw": 5.0,
+                "max_discharge_kw": 5.0,
+                "safe_default_script": "script.hemm_battery_safe",
+            },
+            options=True,
+        )
         assert result.success
         assert result.json_data.get("type") == "create_entry"
 
@@ -196,11 +203,15 @@ class TestOptionsFlow:
         hactl.config_flow_step(flow_id, {"device_type": "thermostat_load", "tier": "beginner"}, options=True)
 
         try:
-            result = hactl.config_flow_step(flow_id, {
-                "device_name": "No Safe Default",
-                "max_power_kw": 2.0,
-                # Missing safe_default_script
-            }, options=True)
+            result = hactl.config_flow_step(
+                flow_id,
+                {
+                    "device_name": "No Safe Default",
+                    "max_power_kw": 2.0,
+                    # Missing safe_default_script
+                },
+                options=True,
+            )
             # If we get here, should get an error form (not create_entry)
             assert result.json_data.get("type") != "create_entry"
         except HactlError as e:

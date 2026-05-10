@@ -65,13 +65,17 @@ class TestEntityPerDevice:
     def test_battery_creates_three_sensors(self, hactl: Hactl) -> None:
         """Adding a battery creates plan, confidence, and mode sensors."""
         # Add battery device
-        _add_device(hactl, "battery", {
-            "device_name": "Ent Test Battery",
-            "capacity_kwh": 10.0,
-            "max_charge_kw": 5.0,
-            "max_discharge_kw": 5.0,
-            "safe_default_script": "script.hemm_battery_safe",
-        })
+        _add_device(
+            hactl,
+            "battery",
+            {
+                "device_name": "Ent Test Battery",
+                "capacity_kwh": 10.0,
+                "max_charge_kw": 5.0,
+                "max_discharge_kw": 5.0,
+                "safe_default_script": "script.hemm_battery_safe",
+            },
+        )
 
         # Check for entity pattern
         result = hactl.ent_ls(pattern="hemm")
@@ -83,11 +87,15 @@ class TestEntityPerDevice:
 
     def test_ev_charger_creates_sensors(self, hactl: Hactl) -> None:
         """Adding an EV charger creates the expected sensors."""
-        _add_device(hactl, "ev_charger", {
-            "device_name": "Ent Test EV",
-            "max_charge_kw": 11.0,
-            "safe_default_script": "script.hemm_ev_safe",
-        })
+        _add_device(
+            hactl,
+            "ev_charger",
+            {
+                "device_name": "Ent Test EV",
+                "max_charge_kw": 11.0,
+                "safe_default_script": "script.hemm_ev_safe",
+            },
+        )
 
         result = hactl.ent_ls(pattern="hemm")
         assert result.success

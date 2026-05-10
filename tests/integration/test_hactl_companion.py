@@ -138,7 +138,7 @@ class TestCompanionTemplates:
 
     def test_tpl_eval_simple(self, hactl: Hactl) -> None:
         """hactl tpl eval with a simple expression works."""
-        result = hactl.tpl_eval('{{ 2 + 2 }}')
+        result = hactl.tpl_eval("{{ 2 + 2 }}")
         assert result.success
         # Result should contain "4"
         assert "4" in result.stdout
@@ -155,7 +155,7 @@ class TestCompanionTemplates:
         """hactl tpl eval with invalid Jinja returns an error indicator."""
         # This may or may not raise — depends on hactl's error handling
         try:
-            result = hactl.tpl_eval('{{ invalid_function_xyz() }}')
+            result = hactl.tpl_eval("{{ invalid_function_xyz() }}")
             # If it succeeds, the output should indicate an error
             assert "error" in result.stdout.lower() or "undefined" in result.stdout.lower()
         except HactlError:

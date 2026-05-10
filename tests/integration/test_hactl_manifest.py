@@ -33,46 +33,67 @@ def _add_device(hactl: Hactl, device_type: str, config: dict) -> None:
 
 
 ALL_DEVICE_CONFIGS = [
-    ("room", {
-        "device_name": "Manifest Room",
-        "floor_area_m2": 30.0,
-        "insulation_class": "medium",
-        "safe_default_script": "script.hemm_room_safe",
-    }),
-    ("thermostat_load", {
-        "device_name": "Manifest Thermostat",
-        "max_power_kw": 2.0,
-        "safe_default_script": "script.hemm_thermostat_safe",
-    }),
-    ("heat_pump", {
-        "device_name": "Manifest HP",
-        "max_power_kw": 5.0,
-        "safe_default_script": "script.hemm_hp_safe",
-    }),
-    ("water_heater", {
-        "device_name": "Manifest WH",
-        "volume_liters": 200.0,
-        "max_power_kw": 3.0,
-        "safe_default_script": "script.hemm_wh_safe",
-    }),
-    ("battery", {
-        "device_name": "Manifest Battery",
-        "capacity_kwh": 10.0,
-        "max_charge_kw": 5.0,
-        "max_discharge_kw": 5.0,
-        "safe_default_script": "script.hemm_battery_safe",
-    }),
-    ("pv_forecast", {
-        "device_name": "Manifest PV",
-        "peak_power_kwp": 8.5,
-        "forecast_adapter": "solcast",
-        "safe_default_script": "script.hemm_pv_safe",
-    }),
-    ("ev_charger", {
-        "device_name": "Manifest EV",
-        "max_charge_kw": 11.0,
-        "safe_default_script": "script.hemm_ev_safe",
-    }),
+    (
+        "room",
+        {
+            "device_name": "Manifest Room",
+            "floor_area_m2": 30.0,
+            "insulation_class": "medium",
+            "safe_default_script": "script.hemm_room_safe",
+        },
+    ),
+    (
+        "thermostat_load",
+        {
+            "device_name": "Manifest Thermostat",
+            "max_power_kw": 2.0,
+            "safe_default_script": "script.hemm_thermostat_safe",
+        },
+    ),
+    (
+        "heat_pump",
+        {
+            "device_name": "Manifest HP",
+            "max_power_kw": 5.0,
+            "safe_default_script": "script.hemm_hp_safe",
+        },
+    ),
+    (
+        "water_heater",
+        {
+            "device_name": "Manifest WH",
+            "volume_liters": 200.0,
+            "max_power_kw": 3.0,
+            "safe_default_script": "script.hemm_wh_safe",
+        },
+    ),
+    (
+        "battery",
+        {
+            "device_name": "Manifest Battery",
+            "capacity_kwh": 10.0,
+            "max_charge_kw": 5.0,
+            "max_discharge_kw": 5.0,
+            "safe_default_script": "script.hemm_battery_safe",
+        },
+    ),
+    (
+        "pv_forecast",
+        {
+            "device_name": "Manifest PV",
+            "peak_power_kwp": 8.5,
+            "forecast_adapter": "solcast",
+            "safe_default_script": "script.hemm_pv_safe",
+        },
+    ),
+    (
+        "ev_charger",
+        {
+            "device_name": "Manifest EV",
+            "max_charge_kw": 11.0,
+            "safe_default_script": "script.hemm_ev_safe",
+        },
+    ),
 ]
 
 
@@ -138,10 +159,14 @@ class TestManifestInDiagnostics:
 
         # Submit with missing required fields (no capacity, no safe_default)
         try:
-            result = hactl.config_flow_step(flow_id, {
-                "device_name": "Invalid Battery",
-                # Missing: capacity_kwh, max_charge_kw, max_discharge_kw, safe_default_script
-            }, options=True)
+            result = hactl.config_flow_step(
+                flow_id,
+                {
+                    "device_name": "Invalid Battery",
+                    # Missing: capacity_kwh, max_charge_kw, max_discharge_kw, safe_default_script
+                },
+                options=True,
+            )
             # Should NOT create entry — expect error form
             assert result.json_data.get("type") != "create_entry"
         except HactlError as e:
@@ -161,13 +186,17 @@ class TestManifestInDiagnostics:
 
         # Submit with invalid values
         try:
-            result = hactl.config_flow_step(flow_id, {
-                "device_name": "Bad Battery",
-                "capacity_kwh": -10.0,  # Invalid: negative
-                "max_charge_kw": 5.0,
-                "max_discharge_kw": 5.0,
-                "safe_default_script": "script.hemm_battery_safe",
-            }, options=True)
+            result = hactl.config_flow_step(
+                flow_id,
+                {
+                    "device_name": "Bad Battery",
+                    "capacity_kwh": -10.0,  # Invalid: negative
+                    "max_charge_kw": 5.0,
+                    "max_discharge_kw": 5.0,
+                    "safe_default_script": "script.hemm_battery_safe",
+                },
+                options=True,
+            )
             # Should reject — either error form or validation failure
             if result.json_data.get("type") == "create_entry":
                 pytest.fail("Negative capacity was accepted — manifest validation gap!")

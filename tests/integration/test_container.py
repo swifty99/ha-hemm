@@ -200,7 +200,9 @@ def test_hemm_add_device_via_options_hactl(hactl: Hactl, device_config: dict) ->
     assert result.json_data.get("step_id") == "select_device"
 
     # Step 2: select device type and tier
-    result = hactl.config_flow_step(flow_id, {"device_type": device_config["device_type"], "tier": "beginner"}, options=True)
+    result = hactl.config_flow_step(
+        flow_id, {"device_type": device_config["device_type"], "tier": "beginner"}, options=True
+    )
     assert result.success, f"Select device failed: {result.stderr}"
     assert result.json_data.get("step_id") == "configure_device"
 

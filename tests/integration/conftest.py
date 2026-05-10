@@ -29,6 +29,7 @@ def pytest_collection_modifyitems(items: list) -> None:
     """Enable sockets for integration tests (pytest-socket blocks by default)."""
     try:
         import pytest_socket
+
         pytest_socket.enable_socket()
         pytest_socket.disable_socket = lambda *a, **kw: None
         pytest_socket.socket_allow_hosts = lambda *a, **kw: None
@@ -40,6 +41,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     """Force-enable sockets before each integration test."""
     try:
         import pytest_socket
+
         pytest_socket.enable_socket()
     except (ImportError, AttributeError):
         pass
@@ -152,8 +154,14 @@ def docker_compose_up(ha_version: str):
     _LOGGER.info("Waiting for HA container to become healthy...")
     subprocess.run(
         [
-            "docker", "compose", "-f", str(COMPOSE_FILE),
-            "up", "-d", "--wait", "homeassistant",
+            "docker",
+            "compose",
+            "-f",
+            str(COMPOSE_FILE),
+            "up",
+            "-d",
+            "--wait",
+            "homeassistant",
         ],
         env=env,
         capture_output=True,
@@ -178,8 +186,14 @@ def docker_compose_up(ha_version: str):
     # Wait for healthy again
     subprocess.run(
         [
-            "docker", "compose", "-f", str(COMPOSE_FILE),
-            "up", "-d", "--wait", "homeassistant",
+            "docker",
+            "compose",
+            "-f",
+            str(COMPOSE_FILE),
+            "up",
+            "-d",
+            "--wait",
+            "homeassistant",
         ],
         env=env,
         capture_output=True,
@@ -251,10 +265,7 @@ def hactl_dir(ha_token: str, ha_base_url: str, tmp_path_factory: pytest.TempPath
     """
     dir_path = tmp_path_factory.mktemp("hactl_instance")
     env_file = dir_path / ".env"
-    env_file.write_text(
-        f"HA_URL={ha_base_url}\n"
-        f"HA_TOKEN={ha_token}\n"
-    )
+    env_file.write_text(f"HA_URL={ha_base_url}\nHA_TOKEN={ha_token}\n")
     _LOGGER.info("Created hactl instance dir: %s", dir_path)
     return dir_path
 
@@ -283,4 +294,3 @@ def hactl(hactl_binary: Path, hactl_dir: Path) -> Hactl:
     Safe for tests that modify state.
     """
     return Hactl(binary=hactl_binary, instance_dir=hactl_dir)
-
