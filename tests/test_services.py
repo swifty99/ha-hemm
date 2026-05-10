@@ -47,8 +47,8 @@ async def test_coordinator_stub_mode(hass: HomeAssistant, init_integration: Conf
     """Test coordinator operates in stub mode when hemm core is unavailable."""
     coordinator: HemmCoordinator = hass.data[DOMAIN][init_integration.entry_id]
     assert coordinator.data is not None
-    # In stub mode (hemm core shadowed), coordinator returns idle data
-    assert coordinator.data["last_status"] in ("stub", "optimal")
+    # In stub mode (no solver run yet), coordinator returns idle data
+    assert coordinator.data["last_status"] in ("idle", "stub", "optimal")
     assert coordinator.data["iteration_count"] >= 0
 
 

@@ -303,105 +303,76 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return results
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data — run the optimizer and return device plans."""
+        """Fetch data — returns current config and cached solver results.
+
+        This method must be fast and never block on solver execution.
+        The solver is run separately via services or scheduled tasks.
+        """
         devices: list[dict[str, Any]] = self.config_entry.data.get("devices", [])
 
-        if not _HEMM_CORE_AVAILABLE:
-            # Fallback stub mode when hemm core is not importable
-            device_plans: dict[str, dict[str, Any]] = {}
-            for device in devices:
-                device_id = device.get("id", "unknown")
+        # Build device_plans from cached solver result or stubs
+        device_plans: dict[str, dict[str, Any]] = {}
+        last_status = "idle"
+        last_solve_time = 0.0
+        last_plans: list[Any] = []
+
+        if self._last_result is not None and _HEMM_CORE_AVAILABLE:
+            try:
+                from hemm.solvers.protocol import SolverStatus
+
+                result = self._last_result
+                last_status = result.status.value
+                last_solve_time = result.solve_time_seconds
+                last_plans = [p.model_dump() for p in result.plans] if result.plans else []
+
+                if result.status in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE):
+                    plan_map: dict[str, PlanMessage] = {p.device_id: p for p in result.plans}
+                    for device in devices:
+                        device_id = device.get("id", "unknown")
+                        plan = plan_map.get(device_id)
+                        if plan and plan.slots:
+                            slot = plan.slots[0]
+                            device_plans[device_id] = {
+                                "power_kw": slot.power_kw,
+                                "confidence_pct": 95.0 if result.status == SolverStatus.OPTIMAL else 70.0,
+                                "mode": slot.mode or "active",
+                            }
+                        else:
+                            device_plans[device_id] = {
+                                "power_kw": 0.0,
+                                "confidence_pct": 0.0,
+                                "mode": "idle",
+                            }
+                else:
+                    for device in devices:
+                        device_id = device.get("id", "unknown")
+                        device_plans[device_id] = {
+                            "power_kw": 0.0,
+                            "confidence_pct": 0.0,
+                            "mode": "error" if result.status == SolverStatus.ERROR else "idle",
+                        }
+            except Exception:
+                _LOGGER.debug("Could not read cached solver result", exc_info=True)
+                last_status = "error"
+
+        # Fill stubs for any devices without plans
+        for device in devices:
+            device_id = device.get("id", "unknown")
+            if device_id not in device_plans:
                 device_plans[device_id] = {
                     "power_kw": 0.0,
                     "confidence_pct": 0.0,
                     "mode": "idle",
                 }
-            return {
-                "horizon_hours": self._horizon_hours,
-                "max_iterations": self._max_iterations,
-                "price_adapter": self._price_adapter,
-                "solver_backend": self._solver_backend,
-                "last_plans": [],
-                "iteration_count": self._iteration_count,
-                "device_plans": device_plans,
-                "last_status": "stub",
-                "last_solve_time": 0.0,
-            }
-
-        try:
-            from hemm.solvers.protocol import SolverStatus
-
-            result = await self.async_run_solver()
-        except Exception:
-            _LOGGER.warning("Solver failed, returning stub data", exc_info=True)
-            # Return stub data on any failure
-            device_plans_stub: dict[str, dict[str, Any]] = {}
-            for device in devices:
-                device_id = device.get("id", "unknown")
-                device_plans_stub[device_id] = {
-                    "power_kw": 0.0,
-                    "confidence_pct": 0.0,
-                    "mode": "error",
-                }
-            return {
-                "horizon_hours": self._horizon_hours,
-                "max_iterations": self._max_iterations,
-                "price_adapter": self._price_adapter,
-                "solver_backend": self._solver_backend,
-                "last_plans": [],
-                "iteration_count": self._iteration_count,
-                "device_plans": device_plans_stub,
-                "last_status": "error",
-                "last_solve_time": 0.0,
-            }
-
-        # Build device_plans for sensors
-        device_plans: dict[str, dict[str, Any]] = {}
-        devices: list[dict[str, Any]] = self.config_entry.data.get("devices", [])
-
-        if result.status in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE):
-            # Map plans to device IDs
-            plan_map: dict[str, PlanMessage] = {p.device_id: p for p in result.plans}
-            for device in devices:
-                device_id = device.get("id", "unknown")
-                plan = plan_map.get(device_id)
-                if plan and plan.slots:
-                    # Use the first slot as current state
-                    slot = plan.slots[0]
-                    device_plans[device_id] = {
-                        "power_kw": slot.power_kw,
-                        "confidence_pct": 95.0 if result.status == SolverStatus.OPTIMAL else 70.0,
-                        "mode": slot.mode or "active",
-                    }
-                else:
-                    device_plans[device_id] = {
-                        "power_kw": 0.0,
-                        "confidence_pct": 0.0,
-                        "mode": "idle",
-                    }
-        else:
-            for device in devices:
-                device_id = device.get("id", "unknown")
-                device_plans[device_id] = {
-                    "power_kw": 0.0,
-                    "confidence_pct": 0.0,
-                    "mode": "error" if result.status == SolverStatus.ERROR else "idle",
-                }
-
-        # Run identification (stubs for now)
-        try:
-            await self.async_run_identification()
-        except Exception:
-            _LOGGER.debug("Identification failed, skipping", exc_info=True)
 
         return {
             "horizon_hours": self._horizon_hours,
             "max_iterations": self._max_iterations,
             "price_adapter": self._price_adapter,
             "solver_backend": self._solver_backend,
-            "last_plans": [p.model_dump() for p in result.plans] if result.plans else [],
+            "last_plans": last_plans,
             "iteration_count": self._iteration_count,
             "device_plans": device_plans,
-            "last_status": result.status.value,
-            "last_solve_time": result.solve_time_seconds,
+            "last_status": last_status,
+            "last_solve_time": last_solve_time,
         }
