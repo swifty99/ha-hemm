@@ -133,16 +133,29 @@ jobs:
       - name: Restart HA to load hemm
         run: |
           docker restart hemm-ha-test
-          docker compose -f docker-compose.test.yml up -d --wait
+          echo "Waiting for HA to become healthy after restart..."
+          for i in $(seq 1 60); do
+            if curl -so /dev/null http://localhost:8123/api/onboarding 2>/dev/null; then
+              echo "HA healthy after ${i}s"
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://localhost:8123/api/onboarding || { echo "::error::HA not healthy after restart"; exit 1; }
         timeout-minutes: 3
-        env:
-          HA_VERSION: ${{ steps.image.outputs.tag }}
 
       - name: Start companion inside HA
         run: |
           docker exec -d hemm-ha-test sh -c 'SUPERVISOR_TOKEN=integration-test-token-12345 python3 -m companion'
-          sleep 3
-          curl -sf http://localhost:9100/v1/health || echo 'Companion not healthy yet (tests may skip)'
+          echo "Waiting for companion to become healthy..."
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:9100/v1/health >/dev/null 2>&1; then
+              echo "Companion healthy after ${i}s"
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://localhost:9100/v1/health || echo '::warning::Companion not healthy (tests may skip)'
 
       - name: Run container tests
         if: matrix.required
