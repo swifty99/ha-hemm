@@ -328,13 +328,32 @@ class HemmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "last_solve_time": 0.0,
             }
 
-        from hemm.solvers.protocol import SolverResult, SolverStatus
-
         try:
+            from hemm.solvers.protocol import SolverStatus
+
             result = await self.async_run_solver()
         except Exception:
             _LOGGER.warning("Solver failed, returning stub data", exc_info=True)
-            result = SolverResult(status=SolverStatus.ERROR)
+            # Return stub data on any failure
+            device_plans_stub: dict[str, dict[str, Any]] = {}
+            for device in devices:
+                device_id = device.get("id", "unknown")
+                device_plans_stub[device_id] = {
+                    "power_kw": 0.0,
+                    "confidence_pct": 0.0,
+                    "mode": "error",
+                }
+            return {
+                "horizon_hours": self._horizon_hours,
+                "max_iterations": self._max_iterations,
+                "price_adapter": self._price_adapter,
+                "solver_backend": self._solver_backend,
+                "last_plans": [],
+                "iteration_count": self._iteration_count,
+                "device_plans": device_plans_stub,
+                "last_status": "error",
+                "last_solve_time": 0.0,
+            }
 
         # Build device_plans for sensors
         device_plans: dict[str, dict[str, Any]] = {}
