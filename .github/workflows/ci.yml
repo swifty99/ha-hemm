@@ -77,16 +77,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ha-version: [stable, prev]
+        ha-version: [stable, prev, beta]
         include:
           - ha-version: stable
-            image: ghcr.io/home-assistant/home-assistant:stable
             required: true
           - ha-version: prev
-            image: ""
             required: true
           - ha-version: beta
-            image: ghcr.io/home-assistant/home-assistant:beta
             required: false
 
     continue-on-error: ${{ !matrix.required }}
@@ -109,27 +106,24 @@ jobs:
           uv sync --extra dev
           uv pip install git+https://github.com/swifty99/hemm.git
 
-      - name: Compute previous HA version
-        if: matrix.ha-version == 'prev'
-        id: prev
-        run: |
-          prev_month=$(date -d "$(date +%Y-%m-01) -1 month" +%Y.%-m)
-          echo "image=ghcr.io/home-assistant/home-assistant:${prev_month}" >> "$GITHUB_OUTPUT"
-
-      - name: Set HA image
+      - name: Compute HA image tag
         id: image
         run: |
-          img="${{ matrix.image }}"
-          if [ -z "$img" ]; then
-            img="${{ steps.prev.outputs.image }}"
-          fi
-          echo "ha_image=${img}" >> "$GITHUB_OUTPUT"
+          case "${{ matrix.ha-version }}" in
+            prev)
+              tag=$(date -d "$(date +%Y-%m-01) -1 month" +%Y.%-m)
+              ;;
+            *)
+              tag="${{ matrix.ha-version }}"
+              ;;
+          esac
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
       - name: Start HA + companion stack
         run: docker compose -f docker-compose.test.yml up -d --wait
         timeout-minutes: 3
         env:
-          HA_VERSION: ${{ matrix.ha-version }}
+          HA_VERSION: ${{ steps.image.outputs.tag }}
 
       - name: Pre-install hemm core into container
         run: docker exec hemm-ha-test pip install --quiet git+https://github.com/swifty99/hemm.git
@@ -140,7 +134,7 @@ jobs:
         env:
           SKIP_DOCKER_COMPOSE: "1"
           HA_BASE_URL: http://localhost:8123
-          HA_VERSION: ${{ matrix.ha-version }}
+          HA_VERSION: ${{ steps.image.outputs.tag }}
 
       - name: Run container tests (non-blocking)
         if: ${{ !matrix.required }}
@@ -153,7 +147,7 @@ jobs:
         env:
           SKIP_DOCKER_COMPOSE: "1"
           HA_BASE_URL: http://localhost:8123
-          HA_VERSION: ${{ matrix.ha-version }}
+          HA_VERSION: ${{ steps.image.outputs.tag }}
 
       - name: Collect HA logs on failure
         if: failure()
