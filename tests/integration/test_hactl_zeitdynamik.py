@@ -122,19 +122,19 @@ class TestReasonSensor:
                 "safe_default_script": "script.hemm_battery_safe",
             },
         )
-        result = hactl.ent_ls(pattern="hemm.*reason", domain="sensor")
+        result = hactl.ent_ls(pattern="reason", domain="sensor")
         if not result.json_data:
             # Fall back to broader search
-            result = hactl.ent_ls(pattern="hemm", domain="sensor")
+            result = hactl.ent_ls(domain="sensor")
         assert result.success
         output = (result.stdout or "") + str(result.json_data or "")
         assert "reason" in output.lower()
 
     def test_reason_sensor_initial_state_idle(self, hactl: Hactl) -> None:
         """Reason sensor initial state is 'idle'."""
-        result = hactl.ent_ls(pattern="hemm.*reason", domain="sensor")
+        result = hactl.ent_ls(pattern="reason", domain="sensor")
         if not result.json_data:
-            result = hactl.ent_ls(pattern="reason", domain="sensor")
+            result = hactl.ent_ls(domain="sensor")
         if not result.json_data:
             pytest.skip("No reason sensor entities found")
 
@@ -207,7 +207,7 @@ class TestBlueprintDiscovery:
         """All 6 HEMM blueprints exist in the container."""
         import json
 
-        result = hactl.run("bp", "ls")
+        result = hactl._run(["bp", "ls"])
         assert result.success
         output = (result.stdout or "") + json.dumps(result.json_data or {})
         output_lower = output.lower()

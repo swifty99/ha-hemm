@@ -164,6 +164,7 @@ class HemmReasonSensor(CoordinatorEntity[HemmCoordinator], SensorEntity):
         self._device_id = device_id
         self._attr_unique_id = f"{entry.entry_id}_{device_id}_reason"
         self._attr_name = f"{device_name} Reason"
+        self._attr_native_value = "idle"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, f"{entry.entry_id}_{device_id}")},
             "name": device_name,
