@@ -242,14 +242,14 @@ print(json.dumps({
 
         # Count different error levels
         error_lines = [
-            l for l in logs.splitlines()
-            if "ERROR" in l and "homeassistant" in l.lower()
+            line for line in logs.splitlines()
+            if "ERROR" in line and "homeassistant" in line.lower()
         ]
-        setup_failures = [l for l in logs.splitlines() if "Setup failed" in l]
+        setup_failures = [line for line in logs.splitlines() if "Setup failed" in line]
         # Exclude known harmless errors
         real_errors = [
-            l for l in error_lines
-            if not any(x in l for x in [
+            line for line in error_lines
+            if not any(x in line for x in [
                 "warp",
                 "custom_components",
                 "We found a custom integration",
@@ -321,7 +321,7 @@ print(json.dumps({{"id": {i}, "mono": m, "elapsed": time.monotonic() - m}}))
         print("\n" + "=" * 60)
         print("  WARP STRESS TEST SUMMARY")
         print("=" * 60)
-        print(f"  Configuration:     villa (14 sensors, 5 automations)")
+        print("  Configuration:     villa (14 sensors, 5 automations)")
         print(f"  Current speed:     {speed:.1f}x")
         if pi_speeds:
             print(f"  Peak speed:        {max(pi_speeds):.1f}x")
