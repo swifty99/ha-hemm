@@ -1,9 +1,10 @@
 # House: villa — Full house with pool
-# Stress test: all 7 device types, all 3 control classes, all 7 constraint types,
-# 10 devices total. Pool modeled as large WaterHeater (2000L, 6 kW).
+# Stress test: all 8 device types, all 3 control classes, all 7 constraint types,
+# 12 devices total including east-west split PV (multi-generator) and passive load.
+# Pool modeled as large WaterHeater (1000L, 6 kW).
 
 name: villa
-description: "Full house — all device types, all control classes, all constraints"
+description: "Full house — all device types, multi-generator, all control classes, all constraints"
 ha_port: 8133
 
 hub:
@@ -13,28 +14,47 @@ hub:
   price_adapter: template
 
 devices:
+  # East-west split PV — multi-generator (2 PV devices)
   - type: pv_forecast
-    tier: beginner
+    tier: advanced
     config:
-      device_name: "Roof PV"
-      peak_power_kwp: 12.0
+      device_name: "PV East"
+      peak_power_kwp: 6.0
       forecast_adapter: solcast
+      source_kind: pv
+      azimuth_deg: 90
+      tilt_deg: 30
+    safe_default_script: script.hemm_pv_safe
+
+  - type: pv_forecast
+    tier: advanced
+    config:
+      device_name: "PV West"
+      peak_power_kwp: 6.0
+      forecast_adapter: solcast
+      source_kind: pv
+      azimuth_deg: 270
+      tilt_deg: 30
     safe_default_script: script.hemm_pv_safe
 
   - type: battery
-    tier: beginner
+    tier: advanced
     config:
       device_name: "House Battery"
       capacity_kwh: 15.0
       max_charge_kw: 7.5
       max_discharge_kw: 7.5
+      charge_efficiency: 0.95
+      discharge_efficiency: 0.93
     safe_default_script: script.hemm_battery_safe
 
   - type: heat_pump
-    tier: beginner
+    tier: advanced
     config:
       device_name: "Main Heat Pump"
       max_power_kw: 8.0
+      source_type: air
+      sink_type: water
     safe_default_script: script.hemm_hp_safe
 
   - type: room
@@ -68,20 +88,20 @@ devices:
       max_power_kw: 1.2
     safe_default_script: script.hemm_thermostat_safe
 
-  # Passive device — observation only, no steering
-  - type: thermostat_load
+  # Passive load — non-steerable kitchen/lighting base load
+  - type: passive_load
     tier: beginner
     config:
-      device_name: "Kitchen Loads"
-      max_power_kw: 3.5
+      device_name: "Kitchen & Lighting"
+      typical_daily_kwh: 10.0
     safe_default_script: script.hemm_passive_safe
-    control_class: passive
 
   - type: ev_charger
     tier: beginner
     config:
       device_name: "Garage Wallbox"
       max_charge_kw: 22.0
+      battery_capacity_kwh: 77.0
     safe_default_script: script.hemm_ev_safe
     control_class: reactive
 

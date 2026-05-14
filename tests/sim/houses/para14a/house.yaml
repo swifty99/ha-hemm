@@ -53,6 +53,13 @@ devices:
       max_charge_kw: 11.0
     safe_default_script: script.hemm_ev_safe
 
+  - type: passive_load
+    tier: beginner
+    config:
+      device_name: "House Base Load"
+      typical_daily_kwh: 12.0
+    safe_default_script: script.hemm_passive_safe
+
 constraints:
   # Battery must have charge to survive grid reduction
   - window_id: battery_reserve
@@ -81,6 +88,15 @@ constraints:
       type: min_energy_until
       min_energy_kwh: 25.0
     priority_penalty: 4.0
+
+  # HP must run enough to keep house warm
+  - window_id: hp_min_runtime
+    device_name: "Main Heat Pump"
+    deadline: "23:59"
+    requirement:
+      type: min_runtime_per_day
+      min_hours: 4
+    priority_penalty: 3.0
 
 quirks:
   - name: para14a_grid_reduction

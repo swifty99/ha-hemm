@@ -38,3 +38,4 @@ volumes:
   ha-sim-config-comfort:
   ha-sim-config-villa:
   ha-sim-config-para14a:
+  ha-sim-config-apartment:

@@ -36,15 +36,20 @@ from .const import (
     CONF_SAFE_DEFAULT_VERIFY_ENTITY,
     CONF_SAFE_DEFAULT_VERIFY_EXPECTED,
     CONF_SAFE_DEFAULT_VERIFY_TIMEOUT,
+    CONF_SINK_TYPE,
     CONF_SOC_ENTITY,
+    CONF_SOURCE_KIND,
+    CONF_SOURCE_TYPE,
     CONF_SOUTH_FACING,
     CONF_STANDBY_LOSS_W,
     CONF_THERMAL_MASS,
     CONF_TILT_DEG,
+    CONF_TYPICAL_DAILY_KWH,
     CONF_U_VALUE,
     CONF_VENDOR_MODEL,
     CONF_VOLUME_LITERS,
     CONF_WINDOW_AREA_M2,
+    CONF_LOAD_PROFILE_ENTITY,
     DeviceType,
 )
 
@@ -91,6 +96,7 @@ def build_manifest(device: dict[str, Any]) -> DeviceManifest:
         DeviceType.BATTERY: _build_battery,
         DeviceType.PV_FORECAST: _build_pv_forecast,
         DeviceType.EV_CHARGER: _build_ev_charger,
+        DeviceType.PASSIVE_LOAD: _build_passive_load,
     }
 
     builder = builders.get(device_type)
@@ -145,6 +151,8 @@ def _build_heat_pump(device_id: str, name: str, safe_default: Any, cfg: dict[str
         vendor_model=cfg.get(CONF_VENDOR_MODEL),
         min_modulation_pct=cfg.get(CONF_MIN_MODULATION_PCT, 0),
         defrost_lockout_minutes=cfg.get(CONF_DEFROST_LOCKOUT_MIN, 0),
+        source_type=cfg.get(CONF_SOURCE_TYPE, "air"),
+        sink_type=cfg.get(CONF_SINK_TYPE, "water"),
     )
 
 
@@ -188,6 +196,7 @@ def _build_pv_forecast(device_id: str, name: str, safe_default: Any, cfg: dict[s
         name=name,
         safe_default=safe_default,
         peak_power_kwp=cfg[CONF_PEAK_POWER_KWP],
+        source_kind=cfg.get(CONF_SOURCE_KIND, "pv"),
         azimuth_deg=cfg.get(CONF_AZIMUTH_DEG, 180),
         tilt_deg=cfg.get(CONF_TILT_DEG, 30),
         forecast_adapter=cfg.get(CONF_FORECAST_ADAPTER, "solcast"),
@@ -208,4 +217,16 @@ def _build_ev_charger(device_id: str, name: str, safe_default: Any, cfg: dict[st
         plug_state_entity=cfg.get(CONF_PLUG_STATE_ENTITY),
         soc_entity=cfg.get(CONF_SOC_ENTITY),
         battery_capacity_kwh=cfg.get(CONF_BATTERY_CAPACITY_KWH),
+    )
+
+
+def _build_passive_load(device_id: str, name: str, safe_default: Any, cfg: dict[str, Any]) -> Any:
+    from hemm.manifest.types import PassiveLoadManifest
+
+    return PassiveLoadManifest(
+        device_id=device_id,
+        name=name,
+        safe_default=safe_default,
+        typical_daily_kwh=cfg[CONF_TYPICAL_DAILY_KWH],
+        load_profile_entity=cfg.get(CONF_LOAD_PROFILE_ENTITY),
     )

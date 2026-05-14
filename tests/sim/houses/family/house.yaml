@@ -35,7 +35,9 @@ devices:
     config:
       device_name: "Garage Wallbox"
       max_charge_kw: 11.0
+      battery_capacity_kwh: 60.0
     safe_default_script: script.hemm_ev_safe
+    control_class: reactive
 
 constraints:
   - window_id: battery_morning_soc

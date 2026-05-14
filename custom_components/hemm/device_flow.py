@@ -1,6 +1,6 @@
-"""Device config flows for HEMM — tiered configuration for all 7 manifest types.
+"""Device config flows for HEMM — tiered configuration for all 8 manifest types.
 
-Each of the 7 manifest types gets configurable via the options flow with
+Each of the 8 manifest types gets configurable via the options flow with
 beginner/advanced/pro tiers. Beginner mode maps simple inputs to full
 manifest values with documented defaults.
 
@@ -44,6 +44,7 @@ from .const import (
     CONF_FORECAST_ENTITY,
     CONF_HYSTERESIS_K,
     CONF_INSULATION_CLASS,
+    CONF_LOAD_PROFILE_ENTITY,
     CONF_LOSS_COEFFICIENT,
     CONF_MAX_CHARGE_KW,
     CONF_MAX_DISCHARGE_KW,
@@ -59,12 +60,16 @@ from .const import (
     CONF_SAFE_DEFAULT_VERIFY_ENTITY,
     CONF_SAFE_DEFAULT_VERIFY_EXPECTED,
     CONF_SAFE_DEFAULT_VERIFY_TIMEOUT,
+    CONF_SINK_TYPE,
     CONF_SOC_ENTITY,
+    CONF_SOURCE_KIND,
+    CONF_SOURCE_TYPE,
     CONF_SOUTH_FACING,
     CONF_STANDBY_LOSS_W,
     CONF_THERMAL_MASS,
     CONF_TIER,
     CONF_TILT_DEG,
+    CONF_TYPICAL_DAILY_KWH,
     CONF_U_VALUE,
     CONF_VENDOR_MODEL,
     CONF_VOLUME_LITERS,
@@ -139,6 +144,8 @@ def _build_thermostat_load_schema(tier: str) -> vol.Schema:
 
 def _build_heat_pump_schema(tier: str) -> vol.Schema:
     """Build schema for HeatPump configuration."""
+    source_types = ["air", "ground", "water"]
+    sink_types = ["air", "water"]
     fields: dict = {
         vol.Required(CONF_DEVICE_NAME): TextSelector(TextSelectorConfig(type="text")),
         vol.Required(CONF_MAX_POWER_KW): _number(0.5, 30, 0.1),
@@ -146,6 +153,12 @@ def _build_heat_pump_schema(tier: str) -> vol.Schema:
     if tier in (ConfigTier.ADVANCED, ConfigTier.PRO):
         fields[vol.Optional(CONF_VENDOR_MODEL)] = TextSelector(TextSelectorConfig(type="text"))
         fields[vol.Optional(CONF_MIN_MODULATION_PCT, default=0)] = _number(0, 100, 1)
+        fields[vol.Optional(CONF_SOURCE_TYPE, default="air")] = SelectSelector(
+            SelectSelectorConfig(options=source_types, mode=SelectSelectorMode.DROPDOWN)
+        )
+        fields[vol.Optional(CONF_SINK_TYPE, default="water")] = SelectSelector(
+            SelectSelectorConfig(options=sink_types, mode=SelectSelectorMode.DROPDOWN)
+        )
     if tier == ConfigTier.PRO:
         fields[vol.Optional(CONF_DEFROST_LOCKOUT_MIN, default=0)] = _number(0, 60, 1)
     fields.update(_safe_default_schema(tier))
@@ -189,7 +202,8 @@ def _build_battery_schema(tier: str) -> vol.Schema:
 
 
 def _build_pv_forecast_schema(tier: str) -> vol.Schema:
-    """Build schema for PVForecast configuration."""
+    """Build schema for PVForecast / generator configuration."""
+    source_kinds = ["pv", "wind", "chp"]
     fields: dict = {
         vol.Required(CONF_DEVICE_NAME): TextSelector(TextSelectorConfig(type="text")),
         vol.Required(CONF_PEAK_POWER_KWP): _number(0.1, 200, 0.1),
@@ -198,6 +212,9 @@ def _build_pv_forecast_schema(tier: str) -> vol.Schema:
         ),
     }
     if tier in (ConfigTier.ADVANCED, ConfigTier.PRO):
+        fields[vol.Optional(CONF_SOURCE_KIND, default="pv")] = SelectSelector(
+            SelectSelectorConfig(options=source_kinds, mode=SelectSelectorMode.DROPDOWN)
+        )
         fields[vol.Optional(CONF_AZIMUTH_DEG, default=180)] = _number(0, 359, 1)
         fields[vol.Optional(CONF_TILT_DEG, default=30)] = _number(0, 90, 1)
     if tier == ConfigTier.PRO:
@@ -223,6 +240,18 @@ def _build_ev_charger_schema(tier: str) -> vol.Schema:
     return vol.Schema(fields)
 
 
+def _build_passive_load_schema(tier: str) -> vol.Schema:
+    """Build schema for PassiveLoad configuration."""
+    fields: dict = {
+        vol.Required(CONF_DEVICE_NAME): TextSelector(TextSelectorConfig(type="text")),
+        vol.Required(CONF_TYPICAL_DAILY_KWH): _number(0.1, 100, 0.1),
+    }
+    if tier in (ConfigTier.ADVANCED, ConfigTier.PRO):
+        fields[vol.Optional(CONF_LOAD_PROFILE_ENTITY)] = _entity("sensor")
+    fields.update(_safe_default_schema(tier))
+    return vol.Schema(fields)
+
+
 # Registry: device_type -> schema builder
 DEVICE_SCHEMA_BUILDERS: dict[str, Any] = {
     DeviceType.ROOM: _build_room_schema,
@@ -232,6 +261,7 @@ DEVICE_SCHEMA_BUILDERS: dict[str, Any] = {
     DeviceType.BATTERY: _build_battery_schema,
     DeviceType.PV_FORECAST: _build_pv_forecast_schema,
     DeviceType.EV_CHARGER: _build_ev_charger_schema,
+    DeviceType.PASSIVE_LOAD: _build_passive_load_schema,
 }
 
 

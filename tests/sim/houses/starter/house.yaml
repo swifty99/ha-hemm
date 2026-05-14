@@ -20,15 +20,19 @@ devices:
       device_name: "Roof PV"
       peak_power_kwp: 9.8
       forecast_adapter: solcast
+      azimuth_deg: 180
+      tilt_deg: 30
     safe_default_script: script.hemm_pv_safe
 
   - type: battery
-    tier: beginner
+    tier: advanced
     config:
       device_name: "House Battery"
       capacity_kwh: 10.0
       max_charge_kw: 5.0
       max_discharge_kw: 5.0
+      charge_efficiency: 0.95
+      discharge_efficiency: 0.93
     safe_default_script: script.hemm_battery_safe
 
 constraints:

@@ -55,6 +55,20 @@ input_number:
     step: 1
     unit_of_measurement: "%"
     initial: 30
+  house_base_load:
+    name: "House Base Load"
+    min: 0
+    max: 10
+    step: 0.1
+    unit_of_measurement: kW
+    initial: 0.3
+  bedroom_temperature:
+    name: "Bedroom Temperature"
+    min: 10
+    max: 35
+    step: 0.5
+    unit_of_measurement: "°C"
+    initial: 19
   hp_power:
     name: "Heat Pump Power"
     min: 0

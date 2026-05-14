@@ -57,6 +57,15 @@ CONF_AZIMUTH_DEG = "azimuth_deg"
 CONF_TILT_DEG = "tilt_deg"
 CONF_FORECAST_ADAPTER = "forecast_adapter"
 CONF_FORECAST_ENTITY = "forecast_entity"
+CONF_SOURCE_KIND = "source_kind"
+
+# HeatPump source/sink type
+CONF_SOURCE_TYPE = "source_type"
+CONF_SINK_TYPE = "sink_type"
+
+# PassiveLoad-specific
+CONF_TYPICAL_DAILY_KWH = "typical_daily_kwh"
+CONF_LOAD_PROFILE_ENTITY = "load_profile_entity"
 
 # EVCharger-specific
 CONF_MIN_CHARGE_KW = "min_charge_kw"
@@ -115,6 +124,7 @@ class DeviceType(StrEnum):
     BATTERY = "battery"
     PV_FORECAST = "pv_forecast"
     EV_CHARGER = "ev_charger"
+    PASSIVE_LOAD = "passive_load"
 
 
 class ConfigTier(StrEnum):
@@ -125,13 +135,14 @@ class ConfigTier(StrEnum):
     PRO = "pro"
 
 
-# Which device types support pro mode (all support beginner; 5 support pro)
+# Which device types support pro mode (all support beginner; 6 support pro)
 DEVICE_PRO_SUPPORT: set[str] = {
     DeviceType.HEAT_PUMP,
     DeviceType.WATER_HEATER,
     DeviceType.BATTERY,
     DeviceType.PV_FORECAST,
     DeviceType.EV_CHARGER,
+    DeviceType.PASSIVE_LOAD,
 }
 
 

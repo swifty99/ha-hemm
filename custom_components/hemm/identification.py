@@ -126,6 +126,18 @@ class ThermostatLoadIdentifier(DeviceIdentifier):
         return None
 
 
+class PassiveLoadIdentifier(DeviceIdentifier):
+    """Online ID for PassiveLoad — refines daily consumption estimate."""
+
+    @property
+    def device_type(self) -> str:
+        return "passive_load"
+
+    def identify(self, observations: list[dict[str, Any]]) -> IdentificationResult | None:
+        """Stub: would refine typical_daily_kwh from observed consumption patterns."""
+        return None
+
+
 # Registry of identifiers per device type
 IDENTIFIER_REGISTRY: dict[str, type[DeviceIdentifier]] = {
     "room": RoomIdentifier,
@@ -135,6 +147,7 @@ IDENTIFIER_REGISTRY: dict[str, type[DeviceIdentifier]] = {
     "battery": BatteryIdentifier,
     "pv_forecast": PVForecastIdentifier,
     "ev_charger": EVChargerIdentifier,
+    "passive_load": PassiveLoadIdentifier,
 }
 
 

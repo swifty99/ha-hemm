@@ -1,0 +1,81 @@
+# House: apartment — Thermal-only, multi-zone, no PV/battery
+# Tests pure optimization without generation. Focus on multi-zone
+# thermal management (2 thermostat loads), standalone DHW scheduling,
+# and passive load accounting. All devices planned.
+
+name: apartment
+description: "Small flat — multi-zone thermal + standalone DHW, no PV, no battery"
+ha_port: 8135
+
+hub:
+  solver_backend: milp_central
+  horizon_hours: 24
+  max_iterations: 50
+  price_adapter: template
+
+devices:
+  - type: thermostat_load
+    tier: beginner
+    config:
+      device_name: "Living Room Radiator"
+      max_power_kw: 1.5
+    safe_default_script: script.hemm_thermostat_safe
+
+  - type: thermostat_load
+    tier: beginner
+    config:
+      device_name: "Bedroom Radiator"
+      max_power_kw: 1.0
+    safe_default_script: script.hemm_thermostat_safe
+
+  - type: water_heater
+    tier: beginner
+    config:
+      device_name: "DHW Tank"
+      volume_liters: 80
+      max_power_kw: 2.0
+    safe_default_script: script.hemm_wh_safe
+
+  - type: passive_load
+    tier: beginner
+    config:
+      device_name: "Apartment Base Load"
+      typical_daily_kwh: 8.0
+    safe_default_script: script.hemm_passive_safe
+
+constraints:
+  - window_id: living_comfort
+    device_name: "Living Room Radiator"
+    deadline: "23:59"
+    requirement:
+      type: max_runtime_per_day
+      max_hours: 10
+    priority_penalty: 2.0
+
+  - window_id: bedroom_comfort
+    device_name: "Bedroom Radiator"
+    deadline: "23:59"
+    requirement:
+      type: max_runtime_per_day
+      max_hours: 8
+    priority_penalty: 2.0
+
+  - window_id: legionella_cycle
+    device_name: "DHW Tank"
+    deadline: "23:59"
+    requirement:
+      type: reach_min_temp_once
+      target_temp_c: 60.0
+    priority_penalty: 10.0
+
+  - window_id: living_min_runtime
+    device_name: "Living Room Radiator"
+    deadline: "23:59"
+    requirement:
+      type: min_runtime_per_day
+      min_hours: 3
+    priority_penalty: 3.0
+
+quirks:
+  - name: safe_default_watchdog
+    description: "Coordinator stall >30min triggers safe_default on all devices"

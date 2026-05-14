@@ -31,10 +31,12 @@ devices:
     safe_default_script: script.hemm_battery_safe
 
   - type: heat_pump
-    tier: beginner
+    tier: advanced
     config:
       device_name: "Main Heat Pump"
       max_power_kw: 5.0
+      source_type: air
+      sink_type: water
     safe_default_script: script.hemm_hp_safe
 
   - type: room
@@ -42,7 +44,7 @@ devices:
     config:
       device_name: "Living Room"
       floor_area_m2: 35.0
-      insulation_class: good
+      insulation_class: medium
     safe_default_script: script.hemm_room_safe
 
   - type: water_heater

@@ -28,6 +28,7 @@ def test_all_device_types_have_identifier() -> None:
         "battery",
         "pv_forecast",
         "ev_charger",
+        "passive_load",
     }
     assert set(IDENTIFIER_REGISTRY.keys()) == expected_types
 

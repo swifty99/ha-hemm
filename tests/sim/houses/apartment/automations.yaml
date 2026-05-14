@@ -1,0 +1,4 @@
+# Apartment house automations — safe-default watchdog only.
+# No quirk triggers (no HP defrost, no EV, no §14a).
+# The safe_default_watchdog is coordinator-level, not automation-driven.
+[]
